@@ -26,6 +26,15 @@ python 3.12+
     }
 }
 ```
+如
+```json
+{
+    "tkinter": {
+        "load": false,
+        "name": "tkinter"
+    }
+}
+```
 
 # 输出
 

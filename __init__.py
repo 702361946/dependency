@@ -18,7 +18,14 @@ modules = json.load("dependency_load_modules")
 }
 """
 if modules is False:
-    modules = {}
+    modules = {
+        {
+            "示例": {
+                "load": False,
+                "name": "包名"
+            }
+        }
+    }
     json.dump(modules, "dependency_load_modules")
 
 
