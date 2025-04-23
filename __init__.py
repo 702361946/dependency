@@ -1,4 +1,5 @@
 import importlib
+import os.path
 
 from ._foundation import *
 
@@ -20,14 +21,13 @@ modules = json.load("dependency_load_modules")
 if modules is False:
     modules = {
         {
-            "示例": {
+            "tkinter": {
                 "load": False,
-                "name": "包名"
+                "name": "tkinter"
             }
         }
     }
     json.dump(modules, "dependency_load_modules")
-
 
 _t = {}
 for name in modules.keys():
@@ -35,7 +35,10 @@ for name in modules.keys():
         log.info(f"load {name}")
         if modules[name]["load"]:
             _t[name] = importlib.import_module(
-                f'_{modules[name]["name"]}',
+                os.path.join(
+                    "modules",
+                    f'_{modules[name]["name"]}'
+                ),
                 package=__package__,
             )
     except Exception as e:

@@ -6,9 +6,9 @@ python 3.12+
 
 # 调用方法
 
-> import dependency
+`import dependency`
 
-> from dependency import *
+`from dependency import *`
 
 # 功能
 
@@ -51,7 +51,7 @@ python 3.12+
 如`modules["xxx"].xxx`
 
 # 模块编写事项
-在此目录下新建一个文件夹
+在modules目录下新建一个文件夹
 
 用sys返回基础路径并找到基础包_foundation
 
