@@ -27,10 +27,10 @@ class Window:
         :param resizable: 窗口是否可缩放(x,y)
         :param main_window: 主窗口,若为None则创建主窗口,否则创建子窗口
         """
-        log.info("__init__, Window")
+        log.info("add Window\n")
         if main_window is None:
             self.window = tk.Tk()
-            log.info("sign window")
+            log.info("sign: window")
         else:
             self.window = tk.Toplevel(main_window)
             # 关闭主窗口时同步关闭子窗口
@@ -38,7 +38,7 @@ class Window:
                 "WM_DELETE_WINDOW",
                 self.window.destroy()
             )
-            log.info("sign sub window")
+            log.info("sign: sub window")
 
         log.info(f"title:{title}")
         log.info(f"geometry:{geometry}")
@@ -55,6 +55,8 @@ class Window:
             "main_window": main_window,
             "log": log
         }
+
+        self.buttons: dict[str, dict] = {}
 
     def modify_window_title(self, title: str):
         """
@@ -92,7 +94,7 @@ class Window:
         :return:
         """
         self.window.destroy()
-        log.info(f"close window: {self.window.title}")
+        log.info(f"close window: {self.info["title"]}")
 
     def withdraw(self):
         """
@@ -100,7 +102,7 @@ class Window:
         :return:
         """
         self.window.withdraw()
-        log.info(f"withdraw window: {self.window.title}")
+        log.info(f"withdraw window: {self.info["title"]}")
 
     def deiconify(self):
         """
@@ -108,12 +110,88 @@ class Window:
         :return:
         """
         self.window.deiconify()
-        log.info(f"deiconify window: {self.window.title}")
+        log.info(f"deiconify window: {self.info["title"]}")
 
-    def run(self):
+    def run(self, pack_button: bool = True):
         """
         运行窗口
         :return:
         """
         log.info(f"run window: {self.info['title']}")
+
+        if pack_button:
+            for i in self.buttons.keys():
+                if self.buttons[i]["pack"]["pack"]:
+                    match self.buttons[i]["pack"]["mode"]:
+                        case "pack":
+                            self.buttons[i]["button"].pack()
+                            log.info(f"pack button:{i}")
+                        case "grid":
+                            self.buttons[i]["button"].grid()
+                            log.info(f"grid button:{i}")
+                        case "place":
+                            self.buttons[i]["button"].place(
+                                x=self.buttons[i]["pack"]["x"],
+                                y=self.buttons[i]["pack"]["y"]
+                            )
+                            log.info(f"place button:{i}")
+                        case _:
+                            log.error(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
+                            raise ValueError(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
+
         self.window.mainloop()
+
+    def button(
+            self,
+            name: str,
+            text: str | None = None,
+            command=None,
+            x: int = 0,
+            y: int = 0,
+            w: int = None,
+            h: int = None,
+            pack_if: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
+
+        :param name: 按钮名称
+        :param text: 按钮文本
+        :param command: function(函数)
+        :param x:
+        :param y:
+        :param w:
+        :param h:
+        :param pack_if: 是否部署按钮
+        :param pack_mode: 部署方法,pack,grid,place
+        :return:
+        """
+        log.info(f"button: {name}")
+
+        if name in self.buttons.keys():
+            log.warning("name in keys")
+            t = input("name in keys, replace?(y/n)")
+            if t != "y":
+                return
+
+        if pack_mode not in ['pack', 'grid', 'place']:
+            log.error(f"pack_mode error: {pack_mode}")
+            raise ValueError(f"pack_mode error: {pack_mode}")
+
+        self.buttons[name] = {
+            "button": tk.Button(
+                self.window,
+                text=text,
+                command=command,
+                width=w,
+                height=h
+            ),
+            "pack": {
+                "x": x,
+                "y": y,
+                "pack": bool(pack_if),
+                "mode": pack_mode
+            }
+        }
+
+
