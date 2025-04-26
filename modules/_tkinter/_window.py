@@ -57,6 +57,7 @@ class Window:
         }
 
         self.buttons: dict[str, dict] = {}
+        self.messages: dict[str, dict] = {}
 
     def modify_window_title(self, title: str):
         """
@@ -112,7 +113,11 @@ class Window:
         self.window.deiconify()
         log.info(f"deiconify window: {self.info["title"]}")
 
-    def run(self, pack_button: bool = True):
+    def run(
+            self,
+            pack_button: bool = True,
+            pack_message: bool = True,
+    ):
         """
         运行窗口
         :return:
@@ -138,6 +143,25 @@ class Window:
                         case _:
                             log.error(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
                             raise ValueError(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
+
+        if pack_message:
+            for i in self.messages.keys():
+                if self.messages[i]["pack"]["pack"]:
+                    match self.messages[i]["pack"]["mode"]:
+                        case "pack":
+                            self.messages[i]["message"].pack()
+                            log.info(f"pack message:{i}")
+                        case "grid":
+                            self.messages[i]["message"].grid()
+                            log.info(f"grid message:{i}")
+                        case "place":
+                            self.messages[i]["message"].place(
+                                x=self.messages[i]["pack"]["x"],
+                                y=self.messages[i]["pack"]["y"]
+                            )
+                        case _:
+                            log.error(f"pack_mode error: {self.messages[i]['pack']['mode']}")
+                            raise ValueError(f"pack_mode error: {self.messages[i]['pack']['mode']}")
 
         self.window.mainloop()
 
@@ -194,4 +218,48 @@ class Window:
             }
         }
 
+    def message(
+            self,
+            name: str,
+            message: str,
+            x: int = 0,
+            y: int = 0,
+            w: int = 100,
+            pack_if: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
 
+        :param name: 消息名称
+        :param message: 文本
+        :param w: 宽度
+        :param x:
+        :param y:
+        :param pack_if: 是否部署消息
+        :param pack_mode: 部署方法,pack,grid,place
+        :return:
+        """
+        log.info(f"message: {message}")
+        if name in self.messages.keys():
+            log.warning("name in keys")
+            t = input("name in keys, replace?(y/n)")
+            if t != "y":
+                return
+
+        if pack_mode not in ['pack', 'grid', 'place']:
+            log.error(f"pack_mode error: {pack_mode}")
+            raise ValueError(f"pack_mode error: {pack_mode}")
+
+        self.messages[name] = {
+            "message": tk.Message(
+                self.window,
+                text=message,
+                width=w
+            ),
+            "pack": {
+                "x": x,
+                "y": y,
+                "pack": bool(pack_if),
+                "mode": pack_mode
+            }
+        }
