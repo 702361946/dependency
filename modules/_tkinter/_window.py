@@ -58,6 +58,9 @@ class Window:
 
         self.buttons: dict[str, dict] = {}
         self.messages: dict[str, dict] = {}
+        self.entrys: dict[str, dict] = {}
+
+        log.info("add window ok\n")
 
     def modify_window_title(self, title: str):
         """
@@ -117,6 +120,7 @@ class Window:
             self,
             pack_button: bool = True,
             pack_message: bool = True,
+            pack_entry: bool = True,
     ):
         """
         运行窗口
@@ -162,6 +166,26 @@ class Window:
                         case _:
                             log.error(f"pack_mode error: {self.messages[i]['pack']['mode']}")
                             raise ValueError(f"pack_mode error: {self.messages[i]['pack']['mode']}")
+
+        if pack_entry:
+            for i in self.entrys.keys():
+                if self.entrys[i]["pack"]["pack"]:
+                    match self.entrys[i]["pack"]["mode"]:
+                        case "pack":
+                            self.entrys[i]["entry"].pack()
+                            log.info(f"pack entry:{i}")
+                        case "grid":
+                            self.entrys[i]["entry"].grid()
+                            log.info(f"grid entry:{i}")
+                        case "place":
+                            self.entrys[i]["entry"].place(
+                                x=self.entrys[i]["pack"]["x"],
+                                y=self.entrys[i]["pack"]["y"]
+                            )
+                            log.info(f"place entry:{i}")
+                        case _:
+                            log.error(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
+                            raise ValueError(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
 
         self.window.mainloop()
 
@@ -218,6 +242,8 @@ class Window:
             }
         }
 
+        log.info(f"button {name} ok")
+
     def message(
             self,
             name: str,
@@ -263,3 +289,74 @@ class Window:
                 "mode": pack_mode
             }
         }
+
+        log.info(f'message {name} ok')
+
+    def entry(
+            self,
+            name: str,
+            default_text: str = None,
+            x: int = 0,
+            y: int = 0,
+            w: int = 100,
+            pack_if: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
+
+        :param name:
+        :param default_text: 默认文本
+        :param x:
+        :param y:
+        :param w:
+        :param pack_if:
+        :param pack_mode:
+        :return:
+        """
+        log.info(f'default_text: {default_text}')
+
+        if name in self.entrys.keys():
+            log.warning("name in keys")
+            t = input("name in keys, replace?(y/n)")
+            if t!= "y":
+                return
+
+        if pack_mode not in ['pack', 'grid', 'place']:
+            log.error(f"pack_mode error: {pack_mode}")
+
+        entry = tk.Entry(
+            self.window,
+            width=w
+        )
+
+        if default_text:
+            # noinspection PyUnusedLocal
+            def set_default_text(event=None):
+                """当输入框失去焦点且为空时，设置默认文本"""
+                if not entry.get():
+                    entry.insert(0, default_text)
+
+            # noinspection PyUnusedLocal
+            def clear_default_text(event=None):
+                """当输入框获得焦点且有默认文本时，清除文本"""
+                if entry.get() == default_text:
+                    entry.delete(0, tk.END)
+
+            # 默认文本
+            entry.insert(0, default_text)
+
+            # 绑定焦点事件
+            entry.bind("<FocusIn>", clear_default_text)
+            entry.bind("<FocusOut>", set_default_text)
+
+        self.entrys[name] = {
+            "entry": entry,
+            "pack": {
+                "x": x,
+                "y": y,
+                "pack": bool(pack_if),
+                "mode": pack_mode
+            }
+        }
+
+        log.info(f'entry {name} ok')
