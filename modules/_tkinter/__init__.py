@@ -7,5 +7,8 @@ __varsion__ = "0.1.0"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 __all__ = [
-    "Window"
+    "Window",
+    "__varsion__",
+    "__author__",
+    "__license__"
 ]

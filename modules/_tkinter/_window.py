@@ -27,10 +27,13 @@ class Window:
         :param resizable: 窗口是否可缩放(x,y)
         :param main_window: 主窗口,若为None则创建主窗口,否则创建子窗口
         """
-        log.info("add Window\n")
+        self.log = log
+
+        self.log.info("add Window\n")
+
         if main_window is None:
             self.window = tk.Tk()
-            log.info("sign: window")
+            self.log.info("sign: window")
         else:
             self.window = tk.Toplevel(main_window)
             # 关闭主窗口时同步关闭子窗口
@@ -38,11 +41,11 @@ class Window:
                 "WM_DELETE_WINDOW",
                 self.window.destroy()
             )
-            log.info("sign: sub window")
+            self.log.info("sign: sub window")
 
-        log.info(f"title:{title}")
-        log.info(f"geometry:{geometry}")
-        log.info(f"resizable:{resizable}")
+        self.log.info(f"title:{title}")
+        self.log.info(f"geometry:{geometry}")
+        self.log.info(f"resizable:{resizable}")
 
         self.window.title(title)
         self.window.geometry(geometry)
@@ -53,14 +56,14 @@ class Window:
             "geometry": geometry,
             "resizable": resizable,
             "main_window": main_window,
-            "log": log
+            "log": self.log
         }
 
         self.buttons: dict[str, dict] = {}
         self.messages: dict[str, dict] = {}
         self.entrys: dict[str, dict] = {}
 
-        log.info("add window ok\n")
+        self.log.info("add window ok\n")
 
     def modify_window_title(self, title: str):
         """
@@ -68,7 +71,7 @@ class Window:
         :param title: 窗口标题
         :return:
         """
-        log.info(f"modify window title: {title}")
+        self.log.info(f"modify window title: {title}")
         self.window.title(title)
         self.info["title"] = title
 
@@ -78,7 +81,7 @@ class Window:
         :param geometry: 窗口大小
         :return:
         """
-        log.info(f"modify window geometry: {geometry}")
+        self.log.info(f"modify window geometry: {geometry}")
         self.window.geometry(geometry)
         self.info["geometry"] = geometry
 
@@ -88,7 +91,7 @@ class Window:
         :param resizable: 窗口是否可缩放(x,y)
         :return:
         """
-        log.info(f"modify window resizable: {resizable}")
+        self.log.info(f"modify window resizable: {resizable}")
         self.window.resizable(resizable[0], resizable[1])
         self.info["resizable"] = resizable
 
@@ -98,7 +101,7 @@ class Window:
         :return:
         """
         self.window.destroy()
-        log.info(f"close window: {self.info["title"]}")
+        self.log.info(f"close window: {self.info["title"]}")
 
     def withdraw(self):
         """
@@ -106,7 +109,7 @@ class Window:
         :return:
         """
         self.window.withdraw()
-        log.info(f"withdraw window: {self.info["title"]}")
+        self.log.info(f"withdraw window: {self.info["title"]}")
 
     def deiconify(self):
         """
@@ -114,7 +117,7 @@ class Window:
         :return:
         """
         self.window.deiconify()
-        log.info(f"deiconify window: {self.info["title"]}")
+        self.log.info(f"deiconify window: {self.info["title"]}")
 
     def run(
             self,
@@ -126,7 +129,7 @@ class Window:
         运行窗口
         :return:
         """
-        log.info(f"run window: {self.info['title']}")
+        self.log.info(f"run window: {self.info['title']}")
 
         if pack_button:
             for i in self.buttons.keys():
@@ -134,18 +137,18 @@ class Window:
                     match self.buttons[i]["pack"]["mode"]:
                         case "pack":
                             self.buttons[i]["button"].pack()
-                            log.info(f"pack button:{i}")
+                            self.log.info(f"pack button:{i}")
                         case "grid":
                             self.buttons[i]["button"].grid()
-                            log.info(f"grid button:{i}")
+                            self.log.info(f"grid button:{i}")
                         case "place":
                             self.buttons[i]["button"].place(
                                 x=self.buttons[i]["pack"]["x"],
                                 y=self.buttons[i]["pack"]["y"]
                             )
-                            log.info(f"place button:{i}")
+                            self.log.info(f"place button:{i}")
                         case _:
-                            log.error(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
+                            self.log.error(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
                             raise ValueError(f"pack_mode error: {self.buttons[i]['pack']['mode']}")
 
         if pack_message:
@@ -154,17 +157,17 @@ class Window:
                     match self.messages[i]["pack"]["mode"]:
                         case "pack":
                             self.messages[i]["message"].pack()
-                            log.info(f"pack message:{i}")
+                            self.log.info(f"pack message:{i}")
                         case "grid":
                             self.messages[i]["message"].grid()
-                            log.info(f"grid message:{i}")
+                            self.log.info(f"grid message:{i}")
                         case "place":
                             self.messages[i]["message"].place(
                                 x=self.messages[i]["pack"]["x"],
                                 y=self.messages[i]["pack"]["y"]
                             )
                         case _:
-                            log.error(f"pack_mode error: {self.messages[i]['pack']['mode']}")
+                            self.log.error(f"pack_mode error: {self.messages[i]['pack']['mode']}")
                             raise ValueError(f"pack_mode error: {self.messages[i]['pack']['mode']}")
 
         if pack_entry:
@@ -173,18 +176,18 @@ class Window:
                     match self.entrys[i]["pack"]["mode"]:
                         case "pack":
                             self.entrys[i]["entry"].pack()
-                            log.info(f"pack entry:{i}")
+                            self.log.info(f"pack entry:{i}")
                         case "grid":
                             self.entrys[i]["entry"].grid()
-                            log.info(f"grid entry:{i}")
+                            self.log.info(f"grid entry:{i}")
                         case "place":
                             self.entrys[i]["entry"].place(
                                 x=self.entrys[i]["pack"]["x"],
                                 y=self.entrys[i]["pack"]["y"]
                             )
-                            log.info(f"place entry:{i}")
+                            self.log.info(f"place entry:{i}")
                         case _:
-                            log.error(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
+                            self.log.error(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
                             raise ValueError(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
 
         self.window.mainloop()
@@ -214,16 +217,16 @@ class Window:
         :param pack_mode: 部署方法,pack,grid,place
         :return:
         """
-        log.info(f"button: {name}")
+        self.log.info(f"button: {name}")
 
         if name in self.buttons.keys():
-            log.warning("name in keys")
+            self.log.warning("name in keys")
             t = input("name in keys, replace?(y/n)")
             if t != "y":
                 return
 
         if pack_mode not in ['pack', 'grid', 'place']:
-            log.error(f"pack_mode error: {pack_mode}")
+            self.log.error(f"pack_mode error: {pack_mode}")
             raise ValueError(f"pack_mode error: {pack_mode}")
 
         self.buttons[name] = {
@@ -242,7 +245,7 @@ class Window:
             }
         }
 
-        log.info(f"button {name} ok")
+        self.log.info(f"button {name} ok")
 
     def message(
             self,
@@ -265,15 +268,15 @@ class Window:
         :param pack_mode: 部署方法,pack,grid,place
         :return:
         """
-        log.info(f"message: {message}")
+        self.log.info(f"message: {message}")
         if name in self.messages.keys():
-            log.warning("name in keys")
+            self.log.warning("name in keys")
             t = input("name in keys, replace?(y/n)")
             if t != "y":
                 return
 
         if pack_mode not in ['pack', 'grid', 'place']:
-            log.error(f"pack_mode error: {pack_mode}")
+            self.log.error(f"pack_mode error: {pack_mode}")
             raise ValueError(f"pack_mode error: {pack_mode}")
 
         self.messages[name] = {
@@ -290,7 +293,7 @@ class Window:
             }
         }
 
-        log.info(f'message {name} ok')
+        self.log.info(f'message {name} ok')
 
     def entry(
             self,
@@ -313,16 +316,16 @@ class Window:
         :param pack_mode:
         :return:
         """
-        log.info(f'default_text: {default_text}')
+        self.log.info(f'default_text: {default_text}')
 
         if name in self.entrys.keys():
-            log.warning("name in keys")
+            self.log.warning("name in keys")
             t = input("name in keys, replace?(y/n)")
             if t!= "y":
                 return
 
         if pack_mode not in ['pack', 'grid', 'place']:
-            log.error(f"pack_mode error: {pack_mode}")
+            self.log.error(f"pack_mode error: {pack_mode}")
 
         entry = tk.Entry(
             self.window,
@@ -359,4 +362,4 @@ class Window:
             }
         }
 
-        log.info(f'entry {name} ok')
+        self.log.info(f'entry {name} ok')
