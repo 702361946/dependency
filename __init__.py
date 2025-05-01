@@ -1,5 +1,4 @@
 import importlib
-import os.path
 
 from ._foundation import *
 
@@ -33,11 +32,8 @@ for name in modules.keys():
         if modules[name]["load"]:
             log.info(f"load {name}")
             _t[name] = importlib.import_module(
-                os.path.join(
-                    "modules",
-                    f'_{modules[name]["name"]}'
-                ),
-                package=__package__,
+                f'._{modules[name]["name"]}',
+                package=f"{__package__}.modules"
             )
     except Exception as e:
         log.error(e)
