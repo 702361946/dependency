@@ -30,8 +30,8 @@ if modules is False:
 _t = {}
 for name in modules.keys():
     try:
-        log.info(f"load {name}")
         if modules[name]["load"]:
+            log.info(f"load {name}")
             _t[name] = importlib.import_module(
                 os.path.join(
                     "modules",
