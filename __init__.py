@@ -20,11 +20,9 @@ modules = json.load("dependency_load_modules")
 """
 if modules is False:
     modules = {
-        {
-            "tkinter": {
-                "load": False,
-                "name": "tkinter"
-            }
+        "tkinter": {
+            "load": False,
+            "name": "tkinter"
         }
     }
     json.dump(modules, "dependency_load_modules")
