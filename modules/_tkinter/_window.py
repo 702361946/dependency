@@ -59,9 +59,9 @@ class Window:
             "log": self.log
         }
 
-        self.buttons: dict[str, dict] = {}
-        self.messages: dict[str, dict] = {}
-        self.entrys: dict[str, dict] = {}
+        self.buttons: dict[str, dict[str, tk.Button | dict]] = {}
+        self.messages: dict[str, dict[str, tk.Message | dict]] = {}
+        self.entrys: dict[str, dict[str, tk.Entry | dict]] = {}
 
         self.log.info("add window ok\n")
 
@@ -191,6 +191,45 @@ class Window:
                             raise ValueError(f"pack_mode error: {self.entrys[i]['pack']['mode']}")
 
         self.window.mainloop()
+
+    def get(
+            self,
+            name: str,
+            component_type: str = "none",
+            entry_return_type: str = "class",
+    ):
+        """
+
+        :param name: 组件名称
+        :param component_type: 组件类型,button,message,entry,如果输入值不为组件类型名则查找全部
+        :param entry_return_type: 输入框返回类型,class,get,class为已定义对象,get为.get()返回
+        :return:
+        """
+        self.log.info(f"get: {name}, type: {component_type}")
+
+        t = []
+        match component_type:
+            case "button":
+                return self.buttons.get(name, {"button": None})["button"]
+            case "message":
+                return self.messages.get(name, {"message": None})["message"]
+            case "entry":
+                self.log.info(f"entry_return_type: {entry_return_type}")
+                t = self.entrys.get(name, {"entry": None})["entry"]
+                if entry_return_type == "get":
+                    if t is None:
+                        self.log.info(f"no entry:{name}")
+                        return None
+                    return self.entrys[name]["entry"].get()
+                return t
+            case _:
+                if name in self.buttons.keys():
+                    t.append(self.buttons[name])
+                if name in self.messages.keys():
+                    t.append(self.messages[name])
+                if name in self.entrys.keys():
+                    t.append(self.entrys[name])
+                return t
 
     def button(
             self,
@@ -363,3 +402,5 @@ class Window:
         }
 
         self.log.info(f'entry {name} ok')
+
+
