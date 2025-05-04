@@ -16,47 +16,29 @@ python 3.12+
 
 其中foundation是此包的基础,默认导入
 
-# json配置
+# 加载
 
-```json
-{
-    "自定义包名": {
-        "load": "是否导入'True/False',一定要是bool类型",
-        "name": "原包名(不必带_)"
-    }
-}
-```
-如
-```json
-{
-    "tkinter": {
-        "load": false,
-        "name": "tkinter"
-    }
-}
-```
+使用load_module加载模块
 
-# 输出
+其中传参为模块名
 
-在modules字典中
+返回值等同于import
 
-```json
-{
-    "自定义包名": "导入成功的包或False"
-}
-```
+但只会加载modules目录下的模块
 
-需要注意变量要以.访问,而非key
+允许传入对照表
 
-如`modules["xxx"].xxx`
+对照表为一个字典,键为模块的别名,值为模块真名
 
 # 模块编写事项
 在modules目录下新建一个文件夹
 
 用sys返回基础路径并找到基础包_foundation
 
-基于_foundation(或其他包)基础进行拓展
+可以通过复制其他包内的get_package.py并from import直接获取
 
 请手动测试是否正常导入
 
 需要注意包名前面要加_
+
+否则load_module函数会找不到此包并返回False
