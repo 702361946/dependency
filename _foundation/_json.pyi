@@ -13,7 +13,7 @@ class Json(object):
             indent: int = 4,
             ensure_ascii: bool = False,
             log: Log = log
-    ) -> object:
+    ):
         self.file_path = file_path
         self.encoding = encoding
         self.indent = indent
@@ -21,10 +21,10 @@ class Json(object):
         self.log = log
         ...
 
-    def dump(self, a, file_name: str, file_path: list[str] | str = None) -> bool:
+    def dump(self, a, file_name: str, file_path: list[str] | str | None = None) -> bool:
         ...
 
-    def load(self, file_name: str, file_path: list[str] | str = None):
+    def load(self, file_name: str, file_path: list[str] | str | None = None):
         ...
 
     def log_get(self) -> None:

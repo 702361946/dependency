@@ -1,6 +1,6 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
-
+from typing import Any
 
 log_path: str
 log_signs: set[str]
@@ -78,4 +78,4 @@ class Log:
 
     def __del__(self): ...
 
-    def __dict__(self) -> dict: ...
+    def dict_config(self) -> dict[str, int | bool | str | tuple[list[str], str]]: ...

@@ -36,7 +36,7 @@ class Json(object):
 
         self.log.info('init ok')
 
-    def dump(self, a, file_name: str, file_path: list[str] | str = None) -> bool:
+    def dump(self, a, file_name: str, file_path: list[str] | str | None = None) -> bool:
         """
         写入文件
         :param a: 要写入的内容
@@ -74,7 +74,7 @@ class Json(object):
             self.log.error(e)
             return False
 
-    def load(self, file_name: str, file_path: list[str] | str = None):
+    def load(self, file_name: str, file_path: list[str] | str | None = None):
         """
         读取文件
         :param file_name: 要写入的文件名,不带后缀

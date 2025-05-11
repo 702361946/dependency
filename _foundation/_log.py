@@ -190,7 +190,7 @@ class Log:
         """
         log_signs.remove(self.sign)
 
-    def __dict__(self):
+    def dict_config(self):
         return {
             "sign": self.sign,
             "level": self.level,

@@ -13,7 +13,7 @@ log = Log(
 )
 
 
-def load_module(name: str, name_compare: dict[str, str] = None):
+def load_module(name: str, name_compare: dict[str, str] | None = None):
     """
     加载模块
     :param name: 模块名
