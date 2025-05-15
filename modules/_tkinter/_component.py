@@ -69,7 +69,7 @@ class TKComponent:
 
     def deploy(self):
         """
-
+        整体部署
         :return:
         """
         self.log.info("Deploy")
@@ -115,6 +115,21 @@ class TKComponent:
                         x=self.components[k]["pack"]["x"],
                         y=self.components[k]["pack"]["y"]
                     )
+
+    def check_name_and_mode(self, name: str = None, mode: str = None):
+        """
+
+        :param name:
+        :param mode:
+        :return:
+        """
+        t = [False,False]
+        self.log.info(f"Check name: {name} and mode: {mode}")
+        if name not in self.components.keys() and name is not None:
+            t[0] = True
+        if mode in ["pack", "grid", "place"] and mode is not None:
+            t[1] = True
+        return tuple(t)
 
     def add_component(
             self,
@@ -187,6 +202,10 @@ class TKComponent:
         """
         self.log.info(f"button: {name}")
 
+        if self.check_name_and_mode(name, pack_mode) != (True, True):
+            self.log.error(f"name: {name} or mode: {pack_mode} is exist")
+            raise ValueError("名字存在或/和部署方法错误")
+
         self.add_component(
             name,
             tk.Button(
@@ -202,5 +221,201 @@ class TKComponent:
             y
         )
 
+    def text(
+            self,
+            name: str,
+            text: str | None = None,
+            x: int = 0,
+            y: int = 0,
+            w: int = None,
+            h: int = 1,
+            pack_open: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
 
+        :param name:
+        :param text:
+        :param x:
+        :param y:
+        :param w: 可展示全角字符数(半角可展示翻倍)
+        :param h: 行
+        :param pack_open:
+        :param pack_mode:
+        :return:
+        """
+        self.log.info(f"text: {name}")
+        if self.check_name_and_mode(name, pack_mode) != (True, True):
+            self.log.error(f"name: {name} or mode: {pack_mode} is exist")
+            raise ValueError("名字存在或/和部署方法错误")
+
+        tk_text = tk.Text(
+                self.frame["frame"],
+                width=w,
+                height=h
+            )
+
+        if text is not None:
+            tk_text.insert(
+                tk.END,
+                text
+            )
+
+        self.add_component(
+            name,
+            tk_text,
+            pack_open,
+            pack_mode,
+            x,
+            y
+        )
+
+    def message(
+            self,
+            name: str,
+            text: str | None = None,
+            x: int = 0,
+            y: int = 0,
+            w: int = None,
+            pack_open: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
+
+        :param name:
+        :param text:
+        :param x:
+        :param y:
+        :param w:
+        :param pack_open:
+        :param pack_mode:
+        :return:
+        """
+        self.log.info(f"message: {name}")
+        if self.check_name_and_mode(name, pack_mode)!= (True, True):
+            self.log.error(f"name: {name} or mode: {pack_mode} is exist")
+            raise ValueError("名字存在或/和部署方法错误")
+
+        tk_message = tk.Message(
+            self.frame["frame"],
+            text=text,
+            width=w,
+        )
+
+        self.add_component(
+            name,
+            tk_message,
+            pack_open,
+            pack_mode,
+            x,
+            y
+        )
+
+
+    def entry(
+            self,
+            name: str,
+            default_text: str | None = None,
+            x: int = 0,
+            y: int = 0,
+            w: int = None,
+            pack_open: bool = True,
+            pack_mode: str = 'pack',
+    ):
+        """
+
+        :param name:
+        :param default_text: 默认文本
+        :param x:
+        :param y:
+        :param w:
+        :param pack_open:
+        :param pack_mode:
+        :return:
+        """
+        self.log.info(f"entry: {name}")
+        if self.check_name_and_mode(name, pack_mode)!= (True, True):
+            self.log.error(f"name: {name} or mode: {pack_mode} is exist")
+            raise ValueError("名字存在或/和部署方法错误")
+
+        tk_entry = tk.Entry(
+            self.frame["frame"],
+            width=w,
+        )
+
+        if default_text:
+            # noinspection PyUnusedLocal
+            def set_default_text(event=None):
+                """当输入框失去焦点且为空时，设置默认文本"""
+                if not tk_entry.get():
+                    tk_entry.insert(0, default_text)
+
+            # noinspection PyUnusedLocal
+            def clear_default_text(event=None):
+                """当输入框获得焦点且有默认文本时，清除文本"""
+                if tk_entry.get() == default_text:
+                    tk_entry.delete(0, tk.END)
+
+            # 默认文本
+            tk_entry.insert(0, default_text)
+
+            # 绑定焦点事件
+            tk_entry.bind("<FocusIn>", clear_default_text)
+            tk_entry.bind("<FocusOut>", set_default_text)
+
+        self.add_component(
+            name,
+            tk_entry,
+            pack_open,
+            pack_mode,
+            x,
+            y
+        )
+
+    def list(
+            self,
+            name: str,
+            _list = None,
+            w: int = None,
+            h: int = None,
+            pack_open: bool = True,
+    ):
+        """
+        建议单独开个Frame,list这玩意不好受
+        默认部署方法为pack
+        :param name:
+        :param _list:
+        :param w:
+        :param h:
+        :param pack_open:
+        :return:
+        """
+        self.log.info(f"list: {name}")
+        if self.check_name_and_mode(name, 'pack')!= (True, True):
+            self.log.error(f"name: {name} or mode: {pack_open} is exist")
+            raise ValueError("名字存在或/和部署方法错误")
+
+        if _list is None:
+            _list = []
+        elif type(_list) is not list:
+            _list = [_list]
+
+        tk_list = tk.Listbox(
+            self.frame["frame"],
+            width=w,
+            height=h,
+        )
+
+        for i in _list:
+            tk_list.insert(
+                tk.END,
+                i
+            )
+
+        self.add_component(
+            name,
+            tk_list,
+            pack_open,
+            'pack',
+        )
 
