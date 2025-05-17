@@ -32,7 +32,7 @@ class Sound(object):
         )
 
         # 遍历文件,建立字典
-        self.sounds = {}
+        self.sounds: dict[str, dict[str, str | pygame.mixer.Sound | None]] = {}
         for root, dirs, files in os.walk(self.file_path):
             for file in files:
                 # 获取基于存储路径的相对路径
@@ -41,7 +41,7 @@ class Sound(object):
                     key = file
                 else:
                     key = f"{rel_path.replace(os.sep, '.')}.{file}"
-                self.sounds[key]: dict[str, str | pygame.mixer.Sound] = {
+                self.sounds[key] = {
                     "path": os.path.join(root, file),
                     "sound": None
                 }
@@ -97,15 +97,23 @@ class Sound(object):
                 raise KeyError(f'sounds no key:{sound_name}')
             return False
 
-        elif self.sounds[sound_name]["sound"] is None:
+        sound = self.sounds[sound_name]["sound"]
+
+        if sound is None:
             self.log.error(f"no init sound:{sound_name}")
             if self.raise_error:
                 raise ValueError(f"no init sound:{sound_name}")
             return False
 
         else:
-            self.sounds[sound_name]["sound"].play()
-            return True
+            if isinstance(sound, pygame.mixer.Sound):
+                sound.play()
+                return True
+            else:
+                self.log.error(f"sound type not Sound:{sound_name}")
+                if self.raise_error:
+                    raise TypeError(f"sound type not Sound:{sound_name}")
+                return False
 
     def stop(self, sound_name: str) -> bool:
         """
@@ -118,15 +126,23 @@ class Sound(object):
                 raise KeyError(f'sounds no key:{sound_name}')
             return False
 
-        elif self.sounds[sound_name]["sound"] is None:
+        sound = self.sounds[sound_name]["sound"]
+
+        if sound is None:
             self.log.error(f"no init sound:{sound_name}")
             if self.raise_error:
                 raise ValueError(f"no init sound:{sound_name}")
             return False
 
         else:
-            self.sounds[sound_name]["sound"].stop()
-            return True
+            if isinstance(sound, pygame.mixer.Sound):
+                sound.stop()
+                return True
+            else:
+                self.log.error(f"sound type not Sound:{sound_name}")
+                if self.raise_error:
+                    raise TypeError(f"sound type not Sound:{sound_name}")
+                return False
 
     def set_volume(self, sound_name: str, volume: float) -> bool:
         """
@@ -145,12 +161,20 @@ class Sound(object):
                 raise KeyError(f'sounds no key:{sound_name}')
             return False
 
-        elif self.sounds[sound_name]["sound"] is None:
+        sound = self.sounds[sound_name]["sound"]
+
+        if sound is None:
             self.log.error(f"no init sound:{sound_name}")
             if self.raise_error:
                 raise ValueError(f"no init sound:{sound_name}")
             return False
 
         else:
-            self.sounds[sound_name]["sound"].set_volume(volume)
-            return True
+            if isinstance(sound, pygame.mixer.Sound):
+                sound.set_volume(volume)
+                return True
+            else:
+                self.log.error(f"sound type not Sound:{sound_name}")
+                if self.raise_error:
+                    raise TypeError(f"sound type not Sound:{sound_name}")
+                return False

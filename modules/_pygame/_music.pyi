@@ -1,6 +1,6 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
-from _get_package import *
+from ._get_package import *
 
 log: Log
 
