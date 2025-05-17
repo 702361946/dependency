@@ -2,6 +2,7 @@
 #  702361946@qq.com(https://github.com/702361946)
 
 from ._music import *
+from ._sound import *
 
 log = Log(
     log_sign="pygame",

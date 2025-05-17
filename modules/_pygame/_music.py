@@ -9,6 +9,7 @@ log = Log(
     log_output_to_file_mode="a"
 )
 
+# 音乐
 class Music(object):
     def __init__(
             self,
@@ -53,12 +54,14 @@ class Music(object):
                 self.audios[key] = os.path.join(root, file)
 
         self.name: str | None = None
-        self.volume: float = 1.0
+        self.volume: float = volume
         self.status: str = 'close'
         self.loop = loop
         self.raise_error = raise_error
 
         pygame.mixer.init()
+
+        self.set_volume(volume)
 
         self.log.info('__init__ ok\n')
 
@@ -219,18 +222,3 @@ class Music(object):
             if self.raise_error:
                 raise ValueError(f'volume in 0.0~1.0 not {volume}')
             return False
-
-    def log_get(self) -> bool:
-        """
-        在self.log中输出状态
-        """
-        self.log.info('get music settings\n'
-                      'music settings\n'
-                      f'name:{self.name}\n'
-                      f'volume:{self.volume}\n'
-                      f'status:{self.status}\n'
-                      f'loop:{self.loop}\n'
-                      f'raise_error:{self.raise_error}\n'
-                      'END\n')
-
-        return True
