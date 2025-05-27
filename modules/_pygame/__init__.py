@@ -1,9 +1,12 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
 
-from ._music import *
-from ._sound import *
-from ._image import *
+from ._get_package import *
+from ._music import Music
+from ._sound import Sound
+from ._image import Image
+from ._font import Font
+from._window import Window
 
 log = Log(
     log_sign="pygame",

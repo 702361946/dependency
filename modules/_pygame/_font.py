@@ -13,7 +13,7 @@ class Font(object):
             self,
             *,
             store_font_file_path: str = "font",
-            font_sizes: tuple[int] | None = None,
+            font_sizes: tuple[int, ...] | None = None,
             raise_error: bool = True,
             log: Log = log
     ):
