@@ -3,6 +3,7 @@
 
 from ._music import *
 from ._sound import *
+from ._image import *
 
 log = Log(
     log_sign="pygame",
