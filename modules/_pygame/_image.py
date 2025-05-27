@@ -24,7 +24,7 @@ class Image(object):
         self.file_path = store_image_file_path
         self.raise_error = raise_error
 
-        self.images = {}
+        self.images: dict[str, dict[str, str | pygame.Surface | None]] = {}
         for root, dirs, files in os.walk(self.file_path):
             for file in files:
                 # 获取基于存储路径的相对路径
@@ -65,7 +65,17 @@ class Image(object):
         t = []
         for i in images:
             if i in self.images.keys():
-                self.images[i]["image"] = pygame.image.load(self.images[i]["path"])
+                # mypy str | None
+                _t = self.images[i]["path"]
+                if _t is None:
+                    self.log.error(f"no path:{i}")
+                    if self.raise_error:
+                        raise ValueError(f"no path:{i}")
+                    t.append(False)
+                    continue
+
+                self.images[i]["image"] = pygame.image.load(str(_t))
+
                 self.log.info(f"ok:{i}")
                 t.append(True)
             else:
@@ -76,7 +86,7 @@ class Image(object):
 
         return t
 
-    def get_image(self, images: str | list[str]) -> list[tuple[bool, pygame.Surface | None]]:
+    def get_image(self, images: str | list[str]) -> list[tuple[bool, pygame.Surface | None | str]]:
         """
         获取图片
         :param images: 图片名,依照规则传入
@@ -98,6 +108,11 @@ class Image(object):
                     self.log.error(f"no init image:{i}")
                     if self.raise_error:
                         raise ValueError(f"no init image:{i}")
+            else:
+                t.append((False, None))
+                self.log.error(f"no image:{i}")
+                if self.raise_error:
+                    raise KeyError(f"no image:{i}")
 
         return t
 
@@ -120,7 +135,14 @@ class Image(object):
         self.log.info(f"blit\\image_name:{image_name}")
         if image_name in self.images.keys():
             if self.images[image_name]["image"] is not None:
-                window.window.blit(self.images[image_name]["image"], (x, y))
+                image = self.images[image_name]["image"]
+                if isinstance(image, pygame.Surface):
+                    window.window.blit(image, (x, y))
+                else:
+                    self.log.error(f"type not Surface:{image_name}")
+                    if self.raise_error:
+                        raise TypeError(f"type not Surface:{image_name}")
+                    return False
 
             else:
                 self.log.error(f"no init image:{image_name}")
