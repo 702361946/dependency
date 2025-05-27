@@ -158,6 +158,37 @@ class Image(object):
 
         return True
 
+    def scale(self, image_name: str, size: tuple[int, int]) -> bool:
+        """
+        缩放图片
+        :param image_name: 图片名,依照规则传入
+        :param size: 缩放后的大小
+        :return:
+        """
+        self.log.info(f"scale\\image_name:{image_name}")
 
+        if image_name in self.images.keys():
+            if self.images[image_name]["image"] is not None:
+                image = self.images[image_name]["image"]
+                if isinstance(image, pygame.Surface):
+                    self.images[image_name]["image"] = pygame.transform.scale(image, size)
+                else:
+                    self.log.error(f"type not Surface:{image_name}")
+                    if self.raise_error:
+                        raise TypeError(f"type not Surface:{image_name}")
+                    return False
 
+            else:
+                self.log.error(f"no init image:{image_name}")
+                if self.raise_error:
+                    raise ValueError(f"no init image:{image_name}")
+                return False
+
+        else:
+            self.log.error(f"no image:{image_name}")
+            if self.raise_error:
+                raise KeyError(f"no image:{image_name}")
+            return False
+
+        return True
 
