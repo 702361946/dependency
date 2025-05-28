@@ -86,6 +86,21 @@ class Image(object):
 
         return t
 
+    def init_all_image(self):
+        """
+        初始化所有图片
+        :return:
+        """
+        self.log.info("init_all_image")
+
+        for i in self.images.keys():
+            if self.images[i]["image"] is not None:
+                continue
+            self.init_image(i)
+
+        self.log.info("init_all_image ok")
+
+
     def get_image(self, images: str | list[str]) -> list[tuple[bool, pygame.Surface | None | str]]:
         """
         获取图片
