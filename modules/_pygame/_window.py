@@ -81,16 +81,20 @@ class Window(object):
         self.run_bool = False
         return True
 
-    def add_user_event_match(self, event: int, _function):
+    def add_user_event_match(self, event: int, _function, _open: bool = True):
         """
         添加用户事件匹配
 
         :param event: 事件代码,详见event_compare.md文件
         :param _function: 函数,要求必须带一个可传入event参数
+        :param _open:
         :return:
         """
         self.log.info(f"add_user_event_match\\event:{event}")
-        self.user_event_match[event] = _function
+        self.user_event_match[event] = {
+            "open": bool(_open),
+            "function": _function
+        }
         return True
 
 
