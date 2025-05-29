@@ -8,7 +8,7 @@ lori = log_output_replace_identifications
 
 
 class Log:
-    all_logs: set[Log] = {}
+    all_logs: set[Log]
 
     def __init__(
             self,
