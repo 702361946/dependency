@@ -1,15 +1,15 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
-from typing import Any
 
 log_path: str
-log_signs: set[str]
 log_levels: dict[str, int]
 log_output_replace_identifications: set[str]
 lori = log_output_replace_identifications
 
 
 class Log:
+    all_logs: set[Log] = {}
+
     def __init__(
             self,
             log_sign: str = "default",

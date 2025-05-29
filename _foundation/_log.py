@@ -9,7 +9,6 @@ match os_name[0]:
     case _:
         log_path = "./log/"
 
-log_signs = {"702361946"}
 log_levels = {
     "DEBUG": 0,
     "INFO": 1,
@@ -27,6 +26,8 @@ lori = log_output_replace_identifications
 
 
 class Log:
+    all_logs = {}
+
     def __init__(
             self,
             log_sign: str = "default",
@@ -63,11 +64,10 @@ class Log:
         self.otfe = str(log_output_to_file_encoding)
         self.otf = str(log_output_time_format)
 
-        # 检查sign是否存在
-        if self.sign in log_signs:
-            print(f"log_sign:{self.sign}\n已存在,请留意输出")
-        else:
-            log_signs.add(self.sign)
+        cls = self.__class__
+        if self in cls.all_logs:
+            raise ValueError("存在相同的日志对象")
+        cls.all_logs.add(self)
 
         # 格式化of
         t = []
@@ -188,7 +188,7 @@ class Log:
         删除时,从log_signs中移除
         :return:
         """
-        log_signs.remove(self.sign)
+        self.__class__.all_logs.remove(self.sign)
 
     def dict_config(self):
         return {
