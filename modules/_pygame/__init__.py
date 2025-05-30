@@ -6,6 +6,7 @@ from ._music import Music
 from ._sound import Sound
 from ._image import Image
 from ._font import Font
+from ._key_mapping import Key, MouseButton
 from ._window import Window
 
 log = Log(
