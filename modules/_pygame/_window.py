@@ -2,13 +2,14 @@
 #  702361946@qq.com(https://github.com/702361946)
 import pygame
 from typing import Any
-from._get_package import *
+from ._get_package import *
 
 log = Log(
     log_sign="pygame.window",
     log_output_to_file_path=f"{log_path}pygame.log",
     log_output_to_file_mode="a"
 )
+
 
 class Window(object):
     def __init__(
@@ -71,7 +72,7 @@ class Window(object):
 
         self.log.info("__init__ ok\n")
 
-    def quit(self, event = None):
+    def quit(self, event=None):
         """
 
         :return:
@@ -97,8 +98,7 @@ class Window(object):
         }
         return True
 
-
-    def run(self, updata = None, record_frame_interval: bool = False) -> bool:
+    def run(self, updata=None, record_frame_interval: bool = False) -> bool:
         """
         运行窗口
         :param updata: 更新函数

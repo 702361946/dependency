@@ -8,6 +8,7 @@ log = Log(
     log_output_to_file_mode="a"
 )
 
+
 class Font(object):
     def __init__(
             self,

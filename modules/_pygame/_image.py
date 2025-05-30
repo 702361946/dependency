@@ -9,6 +9,7 @@ log = Log(
     log_output_to_file_mode="a"
 )
 
+
 class Image(object):
     def __init__(
             self,
@@ -99,7 +100,6 @@ class Image(object):
             self.init_image(i)
 
         self.log.info("init_all_image ok")
-
 
     def get_image(self, images: str | list[str]) -> list[tuple[bool, pygame.Surface | None | str]]:
         """
@@ -206,4 +206,3 @@ class Image(object):
             return False
 
         return True
-

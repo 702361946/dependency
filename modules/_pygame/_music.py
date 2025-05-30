@@ -9,6 +9,7 @@ log = Log(
     log_output_to_file_mode="a"
 )
 
+
 # 音乐
 class Music(object):
     def __init__(

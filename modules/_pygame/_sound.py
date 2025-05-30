@@ -10,6 +10,7 @@ log = Log(
     log_output_to_file_mode="a"
 )
 
+
 # 音效
 class Sound(object):
     def __init__(

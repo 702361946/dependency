@@ -6,10 +6,10 @@ import os
 # 导包
 if True:
     # 获取dependency根路径
-    package_path = os.path.dirname( # .\
-        os.path.dirname( #.\modules\
-            os.path.dirname( # .\modules\.\
-                os.path.abspath(__file__) # .\modules\.\_get_package.py
+    package_path = os.path.dirname(  # .\
+        os.path.dirname(  #.\modules\
+            os.path.dirname(  # .\modules\.\
+                os.path.abspath(__file__)  # .\modules\.\_get_package.py
             )
         )
     )

@@ -6,7 +6,7 @@ from ._music import Music
 from ._sound import Sound
 from ._image import Image
 from ._font import Font
-from._window import Window
+from ._window import Window
 
 log = Log(
     log_sign="pygame",
