@@ -1,8 +1,7 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
 import pygame
-from typing import Any
-from ._get_package import *
+from ._key_mapping import *
 
 log = Log(
     log_sign="pygame.window",
@@ -96,6 +95,33 @@ class Window(object):
             "open": bool(_open),
             "function": _function
         }
+        return True
+
+    def key_event_match(self, cls: Key | MouseButton, event: pygame.event.Event) -> bool:
+        """
+        用来执行key类的按键匹配
+        event只能绑定768,769,1025,1026这种按键事件
+        同时请手动使用cls.add_user_event_match(_function = cls.key_event_match)添加用户事件匹配
+        :param cls: key类
+        :param event: 事件
+        :return:
+        """
+        mode = type(event).__name__
+        if "Key" in mode:
+            mode = mode.replace("Key", "")
+            key = event.dict.get("key", 0)
+        elif "MouseButton" in mode:
+            mode = mode.replace("MouseButton", "")
+            key = event.dict.get("button", 0)
+        else:
+            self.log.error(f"mode {mode} not Key or MouseButton")
+            return False
+
+        cls.run_key_mapping(
+            key=key,
+            mode=mode,
+            event=event
+        )
         return True
 
     def run(self, updata=None, record_frame_interval: bool = False) -> bool:
