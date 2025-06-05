@@ -91,7 +91,6 @@ class Sound(object):
         """
         播放音效
         """
-        self.log.info(f'play\\name:{sound_name}')
         if sound_name not in self.sounds.keys():
             self.log.error(f'sounds no key:{sound_name}')
             if self.raise_error:

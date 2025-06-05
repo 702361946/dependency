@@ -141,6 +141,9 @@ class Window(object):
                         if self.user_event_match[event.type]["open"]:
                             self.user_event_match[event.type]["function"](event=event)
 
+                if self.run_bool is False:
+                    break
+
                 self.window.fill((0, 0, 0))
 
                 if updata is not None:

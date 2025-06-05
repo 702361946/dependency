@@ -147,7 +147,6 @@ class Image(object):
         :param y:
         :return:
         """
-        self.log.info(f"blit\\image_name:{image_name}")
         if image_name in self.images.keys():
             if self.images[image_name]["image"] is not None:
                 image = self.images[image_name]["image"]
