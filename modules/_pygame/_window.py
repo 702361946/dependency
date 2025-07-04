@@ -2,6 +2,7 @@
 #  702361946@qq.com(https://github.com/702361946)
 import pygame
 from ._key_mapping import *
+import types
 
 log = Log(
     log_sign="pygame.window",
@@ -18,6 +19,7 @@ class Window(object):
             size: tuple[int, int] = (320, 180),
             fps: int = 60,
             icon_path: str | None = None,
+            update: types.FunctionType,
             log: Log = log
     ):
         """
@@ -27,6 +29,7 @@ class Window(object):
         :param size: 大小
         :param fps:
         :param icon_path: 图标路径
+        :param update: 更新函数
         :param log:
         """
         self.log = log
@@ -68,6 +71,14 @@ class Window(object):
 
         # 窗口
         self.window: pygame.Surface = pygame.display.set_mode(size)
+
+        # update
+        if isinstance(update, types.FunctionType):
+            self.log.info("update set True")
+            self.update = update
+        else:
+            self.log.error("update Type Error, update is set None")
+            self.update = None
 
         self.log.info("__init__ ok\n")
 
@@ -124,11 +135,24 @@ class Window(object):
         )
         return True
 
-    def run(self, updata=None, record_frame_interval: bool = False) -> bool:
+    def set_update(self, update) -> bool:
+        """
+        用来切换你的屏幕显示
+        :param update: 更新函数
+        :return: T/F
+        """
+        if isinstance(update, types.FunctionType):
+            self.log.info("update set True")
+            self.update = update
+        else:
+            self.log.error("input update type not Function")
+            return False
+        return True
+
+    def run(self, record_frame_interval: bool = False) -> bool:
         """
         运行窗口
-        :param updata: 更新函数
-        :param record_frame_interval: 是否记录帧间隔,日志等级必须为DEBUG或能记录DEBUG日志的等级
+        :param record_frame_interval: 是否记录帧间隔,日志等级必须为能记录DEBUG日志的等级
         :return:
         """
         self.log.info("Window run")
@@ -141,13 +165,10 @@ class Window(object):
                         if self.user_event_match[event.type]["open"]:
                             self.user_event_match[event.type]["function"](event=event)
 
-                if self.run_bool is False:
-                    break
-
                 self.window.fill((0, 0, 0))
 
-                if updata is not None:
-                    updata()
+                if self.update is not None:
+                    self.update()
 
                 pygame.display.flip()
 
