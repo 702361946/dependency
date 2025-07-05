@@ -10,6 +10,7 @@ os_name = (os.name, platform.system())
 0: os.name
 1: platform.system()
 """
+work_directory = str(os.getcwd())
 
 if os_name[1] == "":
     print(f"ERROR:无法识别的操作系统:{os_name}")

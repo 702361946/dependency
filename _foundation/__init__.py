@@ -1,7 +1,7 @@
 #  Copyright (c) 2024-2025.
 #  702361946@qq.com(https://github.com/702361946)
 
-from._os_name_get import os_name
+from ._os_name_get import os_name, work_directory
 from ._json import Json
 from ._log import Log, log_path
 
@@ -13,6 +13,7 @@ __all__ = [
     "Log",
     "Json",
     "log_path",
+    "work_directory",
     "__varsion__",
     "__author__",
     "__license__"

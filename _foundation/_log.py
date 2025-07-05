@@ -1,7 +1,10 @@
+import inspect
 import os
 from datetime import datetime
 
-from ._os_name_get import os_name
+from pkg_resources import working_set
+
+from ._os_name_get import os_name, work_directory
 
 match os_name[0]:
     case "nt":
@@ -20,13 +23,14 @@ log_output_replace_identifications = {
     "time",
     "sign",
     "level",
-    "message"
+    "message",
+    "code"
 }
 lori = log_output_replace_identifications
 
 
 class Log:
-    all_logs = {}
+    all_logs = set()
 
     def __init__(
             self,
@@ -34,13 +38,14 @@ class Log:
             log_level: int = 1,
             log_output_to_console: bool = False,
             log_output_format: tuple[list[str], str] = (
-                    ["time", "sign", "level", "message"],
+                    ["time", "sign", "code", "level", "message"],
                     ";"
             ),
             log_output_to_file_path: str = f"{log_path}_.log",
             log_output_to_file_mode: str = "w",
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
+            get_code_file_and_line: bool = True
     ):
         """
         替换标识支持:time,sign,level,message,
@@ -54,6 +59,7 @@ class Log:
         :param log_output_to_file_mode: 输出到文件的模式,只支持w,a
         :param log_output_to_file_encoding: 输出到文件的编码
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
+        :param get_code_file_and_line: 获取调用log的地址
         """
         self.sign = str(log_sign)
         self.level = int(log_level)
@@ -63,6 +69,7 @@ class Log:
         self.otfm = str(log_output_to_file_mode)
         self.otfe = str(log_output_to_file_encoding)
         self.otf = str(log_output_time_format)
+        self.gfl = bool(get_code_file_and_line)
 
         cls = self.__class__
         if self in cls.all_logs:
@@ -115,6 +122,22 @@ class Log:
                     t += f"{datetime.now().strftime(self.otf)}{self.of[1]}"
                 case "sign":
                     t += f"{self.sign}{self.of[1]}"
+                case "code":
+                    if self.gfl:
+                        a = inspect.stack()
+                        file_in = os.path.abspath(__file__)
+                        for frame in a:
+                            f_name = str(frame.filename)
+                            if f_name == file_in:
+                                continue
+                            f_name = f_name.replace(work_directory, ".")
+
+                            f_line = frame.lineno
+
+                            t += f"{f_name}:{f_line},"
+                        t = t[:-1]  # 去掉最后的","
+                        t += f"{self.of[1]}"
+
                 case "level":
                     t += f"{level}{self.of[1]}"
                 case "message":
@@ -130,7 +153,7 @@ class Log:
 
         return True
 
-    def debug(self, message = "") -> bool:
+    def debug(self, message="") -> bool:
         """
         输出DEBUG日志
         :param message:
@@ -138,7 +161,7 @@ class Log:
         """
         return self.output("DEBUG", message)
 
-    def info(self, message = "") -> bool:
+    def info(self, message="") -> bool:
         """
         输出INFO日志
         :param message:
@@ -146,7 +169,7 @@ class Log:
         """
         return self.output("INFO", message)
 
-    def warning(self, message = "") -> bool:
+    def warning(self, message="") -> bool:
         """
         输出WARNING日志
         :param message:
@@ -154,7 +177,7 @@ class Log:
         """
         return self.output("WARNING", message)
 
-    def error(self, message = "") -> bool:
+    def error(self, message="") -> bool:
         """
         输出ERROR日志
         :param message:
@@ -162,7 +185,7 @@ class Log:
         """
         return self.output("ERROR", message)
 
-    def critical(self, message = "") -> bool:
+    def critical(self, message="") -> bool:
         """
         输出CRITICAL日志
         :param message:
@@ -170,7 +193,7 @@ class Log:
         """
         return self.output("CRITICAL", message)
 
-    def save(self, message = "", level: str = "DEBUG") -> bool:
+    def save(self, message="", level: str = "DEBUG") -> bool:
         """
         保存等级为self.level的日志,或手动输入
         :param level:
@@ -188,7 +211,7 @@ class Log:
         删除时,从log_signs中移除
         :return:
         """
-        self.__class__.all_logs.remove(self.sign)
+        self.__class__.all_logs.discard(self.sign)
 
     def dict_config(self):
         return {

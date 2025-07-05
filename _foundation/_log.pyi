@@ -23,6 +23,7 @@ class Log:
             log_output_to_file_mode: str = "w",
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
+            get_code_file_and_line: bool = True
     ):
         """
         替换标识支持:time,sign,level,message,
@@ -36,6 +37,7 @@ class Log:
         :param log_output_to_file_mode: 输出到文件的模式,只支持w,a
         :param log_output_to_file_encoding: 输出到文件的编码
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
+        :param get_code_file_and_line: 获取调用log的地址
         """
         self.sign = str(log_sign)
         self.level = int(log_level)
@@ -45,6 +47,7 @@ class Log:
         self.otfm = str(log_output_to_file_mode)
         self.otfe = str(log_output_to_file_encoding)
         self.otf = str(log_output_time_format)
+        self.gfl = bool(get_code_file_and_line)
         ...
 
     def level_if(self, level: str) -> bool:
