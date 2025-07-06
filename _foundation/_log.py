@@ -2,8 +2,6 @@ import inspect
 import os
 from datetime import datetime
 
-from pkg_resources import working_set
-
 from ._os_name_get import os_name, work_directory
 
 match os_name[0]:
@@ -45,7 +43,8 @@ class Log:
             log_output_to_file_mode: str = "w",
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
-            get_code_file_and_line: bool = True
+            get_code_file_and_line: bool = True,
+            get_code_len: int = 0
     ):
         """
         替换标识支持:time,sign,level,message,
@@ -60,6 +59,7 @@ class Log:
         :param log_output_to_file_encoding: 输出到文件的编码
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
         :param get_code_file_and_line: 获取调用log的地址
+        :param get_code_len: 获取长度(不含Log类),为0时为全部
         """
         self.sign = str(log_sign)
         self.level = int(log_level)
@@ -69,7 +69,8 @@ class Log:
         self.otfm = str(log_output_to_file_mode)
         self.otfe = str(log_output_to_file_encoding)
         self.otf = str(log_output_time_format)
-        self.gfl = bool(get_code_file_and_line)
+        self.gcfal = bool(get_code_file_and_line)
+        self.gcl = get_code_len
 
         cls = self.__class__
         if self in cls.all_logs:
@@ -123,10 +124,13 @@ class Log:
                 case "sign":
                     t += f"{self.sign}{self.of[1]}"
                 case "code":
-                    if self.gfl:
+                    if self.gcfal:
                         a = inspect.stack()
                         file_in = os.path.abspath(__file__)
+                        v = 0
                         for frame in a:
+                            if v >= self.gcl != 0:
+                                break
                             f_name = str(frame.filename)
                             if f_name == file_in:
                                 continue
@@ -135,6 +139,7 @@ class Log:
                             f_line = frame.lineno
 
                             t += f"{f_name}:{f_line},"
+                            v += 1
                         t = t[:-1]  # 去掉最后的","
                         t += f"{self.of[1]}"
 
@@ -211,7 +216,7 @@ class Log:
         删除时,从log_signs中移除
         :return:
         """
-        self.__class__.all_logs.discard(self.sign)
+        self.__class__.all_logs.discard(self)
 
     def dict_config(self):
         return {
