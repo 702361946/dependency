@@ -43,7 +43,7 @@ class Log:
             log_output_to_file_mode: str = "w",
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
-            get_code_file_and_line: bool = True,
+            get_code_file_and_line: bool = False,
             get_code_len: int = 0
     ):
         """
@@ -54,7 +54,7 @@ class Log:
         :param log_level: 日志等级,对应log_levels,只会输出大于等于的
         :param log_output_to_console: 是否输出到控制台
         :param log_output_format: 输出格式,索引0为替换标识,索引1为分隔符
-        :param log_output_to_file_path: 输出到文件的路径,需要带上文件名及后缀
+        :param log_output_to_file_path: 输出到文件的路径,需要带上文件名
         :param log_output_to_file_mode: 输出到文件的模式,只支持w,a
         :param log_output_to_file_encoding: 输出到文件的编码
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
@@ -86,8 +86,9 @@ class Log:
                 print(f"未知替换符:{i}")
         self.of = (t, str(self.of[1]))
 
-        # 路径补全
-        os.makedirs(os.path.dirname(self.otfp), exist_ok=True)
+        # 后缀补全
+        if self.otfp[-4:] != ".log":
+            self.otfp += ".log"
 
         if self.otfm not in ["w", "a"]:
             print(f"未知模式:{self.otfm}\n已自动设置为w")

@@ -23,7 +23,7 @@ class Log:
             log_output_to_file_mode: str = "w",
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
-            get_code_file_and_line: bool = True,
+            get_code_file_and_line: bool = False,
             get_code_len: int = 0
     ):
         """
