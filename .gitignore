@@ -11,3 +11,4 @@ modules/_pygame/docs/
 *temp*.*
 _modules.md
 mypy.ini
+*.patch
