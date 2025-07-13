@@ -80,7 +80,42 @@ class Window(object):
             self.log.error("update Type Error, update is set None")
             self.update = None
 
+        self.key_mapping: dict[str, Key | MouseButton] = {}
+        self.current_key_mapping: dict[str, str | None] = {
+            "key": None,
+            "MouseButton": None
+        }
+
         self.log.info("__init__ ok\n")
+
+    def set_key_mapping(self, name: str, mapping: Key | MouseButton) -> bool:
+        self.log.info(f"set key mapping {name} -> {mapping}")
+        self.key_mapping[name] = mapping
+        return True
+
+    def activate_key_mapping(self, name: str, _type: str):
+        """
+        激活按键映射
+        :param name: key_mapping_name
+        :param _type: 输入"Key"或"MouseButton"
+        :return:
+        """
+        self.log.info(f"activate key mapping:{name}&{_type}")
+        a = _type.upper()[0]
+        if a != "K" and a != "M":
+            self.log.error("type not Key or MouseButton")
+            raise ValueError("_type not K or M")
+        elif name not in self.key_mapping.keys():
+            self.log.error(f"does not exist key mapping:{name}")
+            raise ValueError(f"does not exist key mapping:{name}")
+
+        match a:
+            case "K":
+                a = "Key"
+            case "M":
+                a = "MouseButton"
+
+        self.current_key_mapping[a] = name
 
     def quit(self, event=None):
         """
@@ -108,32 +143,36 @@ class Window(object):
         }
         return True
 
-    def key_event_match(self, cls: Key | MouseButton, event: pygame.event.Event) -> bool:
+    def key_event_match(self, event: pygame.event.Event) -> bool:
         """
         用来执行key类的按键匹配
         event只能绑定768,769,1025,1026这种按键事件
         同时请手动使用cls.add_user_event_match(_function = cls.key_event_match)添加用户事件匹配
-        :param cls: key类
         :param event: 事件
         :return:
         """
         mode = type(event).__name__
         if "Key" in mode:
+            cls_name = "key"
             mode = mode.replace("Key", "")
             key = event.dict.get("key", 0)
         elif "MouseButton" in mode:
+            cls_name = "MouseButton"
             mode = mode.replace("MouseButton", "")
             key = event.dict.get("button", 0)
         else:
             self.log.error(f"mode {mode} not Key or MouseButton")
             return False
 
-        cls.run_key_mapping(
-            key=key,
-            mode=mode,
-            event=event
-        )
-        return True
+        if self.current_key_mapping[cls_name] is not None:
+            self.key_mapping[self.current_key_mapping[cls_name]].run_key_mapping(
+                key=key,
+                mode=mode,
+                event=event
+            )
+            return True
+
+        return False
 
     def set_update(self, update) -> bool:
         """
