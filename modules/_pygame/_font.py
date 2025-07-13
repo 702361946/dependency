@@ -3,7 +3,7 @@
 from ._window import *
 
 log = Log(
-    log_sign="pygame.font",
+    log_sign="font",
     log_output_to_file_path=f"{log_path}pygame.log",
     log_output_to_file_mode="a"
 )

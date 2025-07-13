@@ -5,7 +5,7 @@ from ._key_mapping import *
 import types
 
 log = Log(
-    log_sign="pygame.window",
+    log_sign="window",
     log_output_to_file_path=f"{log_path}pygame.log",
     log_output_to_file_mode="a"
 )
