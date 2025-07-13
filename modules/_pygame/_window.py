@@ -19,7 +19,7 @@ class Window(object):
             size: tuple[int, int] = (320, 180),
             fps: int = 60,
             icon_path: str | None = None,
-            update: types.FunctionType,
+            update: types.FunctionType | None = None,
             log: Log = log
     ):
         """
@@ -76,6 +76,8 @@ class Window(object):
         if isinstance(update, types.FunctionType):
             self.log.info("update set True")
             self.update = update
+        elif update is None:
+            self.log.warning("update is None, not Function")
         else:
             self.log.error("update Type Error, update is set None")
             self.update = None
@@ -89,6 +91,12 @@ class Window(object):
         self.log.info("__init__ ok\n")
 
     def set_key_mapping(self, name: str, mapping: Key | MouseButton) -> bool:
+        """
+        设置按键映射
+        :param name:
+        :param mapping:
+        :return:
+        """
         self.log.info(f"set key mapping {name} -> {mapping}")
         self.key_mapping[name] = mapping
         return True
@@ -151,9 +159,9 @@ class Window(object):
         :param event: 事件
         :return:
         """
-        mode = type(event).__name__
+        mode = str(event)
         if "Key" in mode:
-            cls_name = "key"
+            cls_name = "Key"
             mode = mode.replace("Key", "")
             key = event.dict.get("key", 0)
         elif "MouseButton" in mode:
@@ -161,7 +169,15 @@ class Window(object):
             mode = mode.replace("MouseButton", "")
             key = event.dict.get("button", 0)
         else:
-            self.log.error(f"mode {mode} not Key or MouseButton")
+            self.log.error(f"cls {mode} not Key or MouseButton")
+            return False
+
+        if "Up" in mode:
+            mode = "up"
+        elif "Down" in mode:
+            mode = "down"
+        else:
+            self.log.error(f"mode {mode} not up or down")
             return False
 
         if self.current_key_mapping[cls_name] is not None:
