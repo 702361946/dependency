@@ -1,6 +1,5 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
-
 from ._window import *
 
 log = Log(
@@ -15,61 +14,177 @@ class Image(object):
             self,
             *,
             store_image_file_path: str = "image",
-            scan_exclusion_directory: list[str] = None,
-            image_file_extension: list[str] = None,
+            exclusion_directory: list[str] = None,
+            image_file_extension: set[str] = None,
+            separator: str = ".",
             log: Log = log
     ):
         """
-        :param store_image_file_path: 保存路径
-        :param scan_exclusion_directory: 扫描时排除的目录, 均为保存路径拼接
+        :param store_image_file_path: 保存路径,从.\\开始,除非为绝对路径
+        :param exclusion_directory: 排除的目录, 均为保存路径拼接
         :param image_file_extension: 允许的文件后缀
+        :param separator: 分隔符,用以分割路径
         :param log:
         """
         self.log = log
         self.log.info("__init__")
 
+        self.separator = separator
+
         # 处理默认值
+        if exclusion_directory is None:
+            exclusion_directory = []
         if image_file_extension is None:
-            image_file_extension = ["png", "jpg", "jpeg"]
-        if scan_exclusion_directory is None:
-            scan_exclusion_directory = []
+            image_file_extension: set[str] = {"png", "jpg", "jpeg"}
 
-        self.scan_exclusion_directory: list[str] = scan_exclusion_directory
-        self.image_file_extension: list[str] = [ext.lower().lstrip(".") for ext in image_file_extension]
+        if os.path.isabs(store_image_file_path):
+            self.file_path: str = store_image_file_path
+        else:
+            self.file_path: str = os.path.abspath(store_image_file_path)
 
-        self.file_path: str = store_image_file_path
-
-        # 预计算排除目录的绝对路径，避免每次循环拼接
-        exclude_abs = {
-            os.path.abspath(os.path.join(self.file_path, d))
-            for d in self.scan_exclusion_directory
-        }
+        t: set[str] = set()
+        for i in exclusion_directory:
+            t.add(os.path.join(self.file_path, i))
+        self.exclusion_directory: set[str] = t
+        self.image_file_extension: set[str] = image_file_extension
 
         self.images: dict[str, dict[str, str | pygame.Surface | None]] = {}
-        for root, dirs, files in os.walk(self.file_path):
-            # 如果当前目录在排除列表，跳过整个分支
-            if os.path.abspath(root) in exclude_abs:
-                dirs[:] = []  # 不再遍历子目录
-                continue
-
-            for file in files:
-                ext = os.path.splitext(file)[1].lower().lstrip(".")
-                if ext not in self.image_file_extension:
-                    continue
-
-                rel_path = os.path.relpath(root, self.file_path)
-                if rel_path == ".":
-                    key = file
-                else:
-                    key = f"{rel_path.replace(os.sep, '.')}.{file}"
-
-                self.images[key] = {
-                    "path": os.path.join(root, file),
-                    "image": None
-                }
+        """
+        {
+            "file_path": str,
+            
+            "file_name": str(带后缀),
+            
+            "image": pygame.Surface | None 
+        }
+        """
 
         pygame.init()
         self.log.info("__init__ ok\n")
+
+    def add_file(self, file_path: str) -> bool:
+        """
+
+        :param file_path: 文件路径,基于保存路径
+        :return:
+        """
+        path = os.path.join(self.file_path, file_path)
+
+        # 排除目录
+        for ed in self.exclusion_directory:
+            if os.path.commonpath([path, ed]) in self.exclusion_directory:
+                self.log.warning(f"file_path in exclusion directory:{path}")
+                return False
+
+        # 文件存在
+        if not os.path.isfile(path):
+            self.log.warning(f"file not in: {path}")
+            return False
+
+        # 后缀检查
+        _, ext = os.path.splitext(path)
+        # .开头,需去掉
+        if ext[1:] not in self.image_file_extension:
+            self.log.info(f"file extension not in extension:{self.image_file_extension}\\{ext}")
+            return False
+
+        # key
+        try:
+            rel_path = os.path.relpath(path, self.file_path)
+        except ValueError:
+            self.log.warning(f"无法计算相对路径: {path}")
+            return False
+        key = rel_path.replace(os.sep, self.separator)
+
+        # key存在检查
+        if key in self.images:
+            self.log.info(f"file in images: {path}\\{key}")
+            return False
+
+        # 加入
+        self.images[key] = {
+            "path": path,
+            "image": None
+        }
+        self.log.info(f"已加入: {key}")
+        return True
+
+    def add_files(self, file_path_s: list[str] | str) -> list[bool]:
+        """
+
+        :param file_path_s: 文件路径,均为相对路径
+        :return: 每次添加的成功情况
+        """
+        if isinstance(file_path_s, str):
+            file_path_s = [file_path_s]
+
+        t = []
+        for i in file_path_s:
+            t.append(self.add_file(i))
+
+        return t
+
+    def scan_directory(self, directory: str) -> list[str]:
+        """
+
+        :param directory: 扫描目录
+        :return: 返回扫描到的所有后缀匹配的文件
+        """
+        directory = os.path.join(self.file_path, directory)
+
+        t = []
+        for root, dirs, files in os.walk(directory):
+            for i in files:
+                _, ext = os.path.splitext(i)
+                if ext[1:] in self.image_file_extension:
+                    t.append(os.path.join(self.file_path, root, i))
+
+        return t
+
+    def scan_directory_s(self, directorys: list[str] | str) -> list[str]:
+        """
+
+        :param directorys:
+        :return:
+        """
+        if isinstance(directorys, str):
+            directorys = [directorys]
+
+        t: set[str] = set()
+        for i in directorys:
+            for _i in self.scan_directory(i):
+                t.add(_i)
+
+        return list(t)
+
+    def add_exclusion_directory(self, ed_path: str, del_file: bool = False):
+        """
+
+        :param ed_path: 排除目录,基于相对目录
+        :param del_file: 删除已加载的匹配项目
+        :return:
+        """
+        ed_path = os.path.join(self.file_path, ed_path)
+        self.exclusion_directory.add(ed_path)
+
+        if del_file:
+            for i in self.images.keys():
+                if os.path.commonpath([self.images[i]["path"], ed_path]) == ed_path:
+                    if self.images.pop(i, None) is None:
+                        self.log.warning(f"file not in images:{i}")
+
+    def add_exclusion_directory_s(self, ed_path_s: list[str] | str, del_file: bool = False):
+        """
+        同add_exclusion_directory
+        :param ed_path_s: 需要的列表
+        :param del_file:
+        :return:
+        """
+        if isinstance(ed_path_s, str):
+            ed_path_s = [ed_path_s]
+
+        for i in ed_path_s:
+            self.add_exclusion_directory(i, del_file)
 
     def init_image(self, images: str | list[str]) -> list[bool]:
         """
@@ -83,7 +198,7 @@ class Image(object):
         temp.png
         temp.temp.jpg
 
-        总之就是去掉.\\(./),\\(/)换成.
+        总之就是把路径分隔符换成指定的分隔符
         :return:
         """
         self.log.info(f"load\\images:{images}")
