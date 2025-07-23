@@ -78,6 +78,7 @@ class Window(object):
             self.update = update
         elif update is None:
             self.log.warning("update is None, not Function")
+            self.update = update
         else:
             self.log.error("update Type Error, update is set None")
             self.update = None
