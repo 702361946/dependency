@@ -70,7 +70,7 @@ class Music(object):
             self,
             name: str,
             path: list[str] | None = None
-    ) -> str | None:
+    ) -> str | bool:
         """
         获取音乐文件
         :param path: 基于存储路径的相对路径,顺序拼接
@@ -110,7 +110,7 @@ class Music(object):
             self.log.error(f'no music:{t}')
             if self.raise_error:
                 raise ValueError(f'no music:{t}')
-            return None
+            return False
 
         self.log.info(f"get path: {t}")
 
@@ -137,11 +137,11 @@ class Music(object):
         if music_path is not None:
             pygame.mixer.music.load(music_path)
             try:
-                if self.loop is True:
+                if self.loop:
                     pygame.mixer.music.play(-1)
                     self.status = 'playing'
 
-                elif self.loop is False:
+                elif not self.loop:
                     pygame.mixer.music.play()
                     self.status = 'playing'
 
