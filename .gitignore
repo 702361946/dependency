@@ -5,6 +5,9 @@ log/
 json/
 .mypy_cache/
 music/
+dist/
+font/
+image/
 language/
 
 modules/_pygame/docs/
@@ -12,4 +15,3 @@ modules/_pygame/docs/
 *temp*.*
 _modules.md
 mypy.ini
-*.patch
