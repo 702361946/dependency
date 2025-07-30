@@ -94,6 +94,8 @@ class Log:
             print(f"未知模式:{self.otfm}\n已自动设置为w")
             self.otfm = "w"
 
+        os.makedirs(self.otfp, exist_ok=True)
+
         if self.otfm == "w":
             with open(self.otfp, "w", encoding=self.otfe) as f:
                 f.write("")

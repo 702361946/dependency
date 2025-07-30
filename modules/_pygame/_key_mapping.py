@@ -8,7 +8,7 @@ import pygame.event
 from ._get_package import *
 
 log = Log(
-    log_sign="pygame.key_mapping",
+    log_sign="key_mapping",
     log_output_to_file_path=f"{log_path}pygame.log",
     log_output_to_file_mode="a"
 )

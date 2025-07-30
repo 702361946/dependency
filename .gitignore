@@ -5,6 +5,10 @@ log/
 json/
 .mypy_cache/
 music/
+dist/
+font/
+image/
+language/
 
 modules/_pygame/docs/
 
