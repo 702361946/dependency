@@ -8,7 +8,8 @@ from ._log import Log, log_path
 
 log = Log(
     log_sign="json",
-    log_output_to_file_path=f"{log_path}json.log"
+    log_output_to_file_path=f"{log_path}_.log",
+    log_output_to_file_mode="w"
 )
 
 
