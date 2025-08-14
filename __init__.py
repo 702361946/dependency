@@ -3,13 +3,14 @@ import importlib
 
 from ._foundation import *
 
-__varsion__ = "0.2.0"
+__varsion__ = "0.2.1"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 
 log = Log(
     "dependency",
-    log_output_to_file_path=f"{log_path}dependency.log",
+    log_output_to_file_path=f"{log_path}_.log",
+    log_output_to_file_mode="w"
 )
 
 
@@ -72,7 +73,6 @@ def list_modules(out_md_file: bool = False) -> list[str]:
         with open("_modules.md", "w", encoding="utf-8") as f:
             for readme_file in readme_files:
                 f.write(readme_file + "\n")
-
 
     modules_dir = os.path.join(
         os.path.dirname(__file__),
