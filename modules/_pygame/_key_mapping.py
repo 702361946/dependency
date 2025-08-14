@@ -142,7 +142,7 @@ class Key:
     def __init__(self, *, log: Log = log):
         self.log = log
         self.cls = self.__class__
-        self.key_function = self.cls.key_function
+        self.key_function = {}
 
     def key_id_return_key_name(self, key_id: int) -> str | bool:
         """
