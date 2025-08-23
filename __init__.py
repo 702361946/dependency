@@ -44,7 +44,7 @@ def list_modules(out_md_file: bool = False) -> list[str]:
     列出所有modules下模块
     此函数仅用于提示该如何from import或import
     同时只有以_为前缀的python包才会列出
-    :param out_md_file: 是否在当前运行目录下输出md文件并列出所有带README.md的模块下README.md文件的路径[name](path)
+    :param out_md_file: 是否在当前运行目录下输出md文件并列出所有带README.md的模块下README.md文件的路径[name](file_save_path)
     :return:
     """
     log.info("list modules")

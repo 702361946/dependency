@@ -14,7 +14,7 @@ if True:
         )
     )
 
-    # 将包路径添加到sys.path
+    # 将包路径添加到sys.file_save_path
     if package_path not in sys.path:
         sys.path.append(package_path)
 
