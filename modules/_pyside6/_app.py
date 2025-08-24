@@ -2,10 +2,9 @@
 #  702361946@qq.com(https://github.com/702361946)
 import os.path
 
-from PySide6.QtCore import QTranslator
-
 from ._get_package import *
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QTranslator
+from PySide6.QtWidgets import QApplication, QWidget
 
 log = Log(
     log_sign="app",
@@ -38,6 +37,15 @@ class App:
         else:
             self.app.installTranslator(self.translator)
 
+    def run(self) -> int:
+        """
+        运行实例
+        :return:
+        """
+        exit_code = self.app.exec()
+        self.log.info(f"{exit_code=}")
+        return exit_code
+
     def close_all_windows(self):
         self.app.closeAllWindows()
         self.log.info("close all windows -- ok")
@@ -59,3 +67,17 @@ class App:
             self.log.error(f"Failed to load translation file for {language}")
             self.translator.load(f"{os.path.join(os.path.join('.', 'language'), language)}.qm")
             self.app.installTranslator(self.translator)
+
+    def set_ui(self, ui: QWidget) -> bool:
+        """
+        设置界面ui,必须为ui文件加载,
+        :param ui:
+        :return:
+        """
+        if not isinstance(ui, QWidget):
+            self.log.error("UI must be an instance of QWidget")
+            return False
+
+        ui.show()
+        return True
+
