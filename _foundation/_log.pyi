@@ -1,5 +1,6 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
+from typing import Protocol
 
 log_path: str
 log_levels: dict[str, int]
@@ -85,3 +86,20 @@ class Log:
     def __del__(self): ...
 
     def dict_config(self) -> dict[str, int | bool | str | tuple[list[str], str]]: ...
+
+
+class LogProtocol(Protocol):
+    def info(self, message="") -> bool:
+        ...
+
+    def error(self, message="") -> bool:
+        ...
+
+    def critical(self, message="") -> bool:
+        ...
+
+    def debug(self, message="") -> bool:
+        ...
+
+    def warning(self, message="") -> bool:
+        ...

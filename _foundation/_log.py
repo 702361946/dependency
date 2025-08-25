@@ -1,6 +1,7 @@
 import inspect
 import os
 from datetime import datetime
+from typing import Protocol
 
 from ._os_name_get import os_name, work_directory
 
@@ -232,3 +233,20 @@ class Log:
             "otfe": self.otfe,
             "otf": self.otf
         }
+
+
+class LogProtocol(Protocol):
+    def info(self, message="") -> bool:
+        ...
+
+    def error(self, message="") -> bool:
+        ...
+
+    def critical(self, message="") -> bool:
+        ...
+
+    def debug(self, message="") -> bool:
+        ...
+
+    def warning(self, message="") -> bool:
+        ...
