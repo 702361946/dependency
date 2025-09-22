@@ -15,8 +15,6 @@ log = Log(
 class SQLite:
     def __init__(self, db_name: str, auto_commit: bool = True, *, log: Log = log):
         """
-        初始化数据库连接
-
         :param db_name: 数据库文件名
         :param auto_commit: 自动提交事务,为False时请手动提交事务
         :param log:
