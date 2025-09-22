@@ -1,1 +1,1 @@
-from ._SQLite3 import SQLite3
+from ._SQLite3 import SQLite
