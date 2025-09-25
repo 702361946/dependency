@@ -14,3 +14,16 @@ log = Log(
     log_output_to_file_path=f"{log_path}pygame.log",
     log_output_to_file_mode="w"
 )
+
+__varsion__ = "1.1.0"
+__author__ = "702361946@qq.com"
+__license__ = "MIT"
+__all__ = [
+    "Music",
+    "Sound",
+    "Image",
+    "Font",
+    "Key",
+    "MouseButton",
+    "Window"
+]

@@ -1,6 +1,6 @@
 #  Copyright (c) 2025.
 #  702361946@qq.com(https://github.com/702361946)
-
+from pyclbr import Function
 from typing import Any
 
 import pygame.event
@@ -156,13 +156,40 @@ class Key:
 
         return self.cls.id_key[key_id]
 
-    def add_key_mapping(self, key: str | int, mode: str, _function, _open: bool = True) -> bool:
+    def specification_mode(self, mode: str) -> str | bool:
+        """
+
+        :param mode: 只取首字母
+        :return: "up" or "down" or False
+        """
+        match mode[0].upper():
+            case "U":
+                return "up"
+            case "D":
+                return "down"
+            case _:
+                self.log.error(f"mode not down or up\\{mode=}")
+                return False
+
+    def add_key_mapping(
+            self,
+            key: str | int,
+            mode: str,
+            _function: Function | list[Function],
+            _open: bool = True,
+            index: int | bool = False
+    ) -> bool:
         """
 
         :param key: 按键或按键id
-        :param mode: 模式, down: 按下, up: 松开
-        :param _function: 可执行函数(可通过lambda表达式传入), 必须包含一个event参数, 用于传入pygame事件
+        :param mode: 模式, down: 按下, up: 松开, 可直接传入首字母
+        :param _function: 可执行函数(可通过lambda表达式传入), 可包含一个event参数, 用于传入pygame事件, \
+        当为lambda表达式时将不会传入event参数
         :param _open: 是否开启
+        :param index: 是否启用列表模式, \
+        为True时会将"function"k-v改为list[function], 并在末尾插入提供的function, 且启用"index"k-v, 默认值为0, \
+        为False时会直接替换"function"k-v的值, \
+        "index"k-v值为-1表示顺序执行, 为>=0时表示执行列表中的某个function
         :return:
         """
         # key_id -> key_name
@@ -176,34 +203,67 @@ class Key:
         if key not in self.cls.id_key.values():
             self.log.error(f"{key} not in key_mapping")
             return False
-        elif mode not in ["down", "up"]:
-            self.log.error(f"mode {mode} not down or up")
+
+        mode = self.specification_mode(mode)
+        if mode is False:
             return False
 
         if key not in self.key_function.keys():
             self.key_function[key] = {
                 "down": {
-                    "function": None,
-                    "open": False
+                    "function": [],
+                    "open": False,
+                    "index": 0
                 },
                 "up": {
-                    "function": None,
-                    "open": False
+                    "function": [],
+                    "open": False,
+                    "index": 0
                 }
             }
 
-        self.key_function[key][mode] = {
-            "function": _function,
-            "open": _open
-        }
+        k_f = self.key_function[key][mode]
+        if index is False:
+            if isinstance(_function, list):
+                k_f = {
+                    "function": _function,
+                    "open": _open,
+                    "index": 0
+                }
+            else:
+                k_f = {
+                    "function": [_function],
+                    "open": _open,
+                    "index": 0
+                }
+        else:
+            if isinstance(_function, list):
+                k_f["function"].append(*_function)
+            else:
+                k_f["function"].append(_function)
+
+            k_f["open"] = _open
+
+        if isinstance(index, int):
+            if index >= -1:
+                k_f["index"] = int(index)
+            else:
+                self.log.warning("index !>= -1")
+
         self.log.info(f"{mode} {key} mapping -> {_function}")
         return True
 
-    def remove_key_mapping(self, key: str | int, mode: str) -> bool:
+    def remove_key_mapping(
+            self,
+            key: str | int,
+            mode: str,
+            index: int | None = None
+    ) -> bool:
         """
         移除按键映射
         :param key: 按键或按键id
-        :param mode: 模式, down: 按下, up: 松开
+        :param mode: 模式, down: 按下, up: 松开, 可直接输入首字母
+        :param index: 当为int且 >= 0时, 移除该位置的函数, 如果该位置没有函数则返回False
         :return:
         """
         if isinstance(key, int):
@@ -217,15 +277,29 @@ class Key:
             self.log.error(f"{key} has no mapping")
             return False
 
-        elif mode not in ["down", "up"]:
-            self.log.error(f"mode {mode} not down or up")
+        mode = self.specification_mode(mode)
+        if mode is False:
             return False
 
-        self.key_function[key][mode] = {
-            "function": None,
-            "open": False
-        }
-        self.log.info(f"remove {mode} {key} mapping")
+        if index is None:
+            self.key_function[key][mode] = {
+                "function": [],
+                "open": False,
+                "index": 0
+            }
+            self.log.info(f"remove {mode} {key} mapping")
+        elif isinstance(index, int) or isinstance(index, float):
+            index = int(index)
+            if 0 <= index <= len(self.key_function[key][mode]["function"]) - 1:
+                del self.key_function[key][mode]["function"][index]
+                self.log.info(f"remove {mode} {key} mapping, {index=}")
+            else:
+                log.warning(f"index not in 0 ~ {len(self.key_function[key][mode]['function']) - 1}")
+                return False
+        else:
+            self.log.error(f"index type not int or value is not None\\{index=}")
+            return False
+
         return True
 
     def run_key_mapping(
@@ -233,11 +307,11 @@ class Key:
             key: int | str,
             mode: str = "down",
             event: pygame.event.Event | None = None
-    ) -> bool:
+    ) -> list[bool | Any] | bool:
         """
         运行按键映射
         :param key: 按键或按键id
-        :param mode: 模式, down: 按下, up: 松开
+        :param mode: 模式, down: 按下, up: 松开, 可传入首字母
         :param event: pygame事件,用于传入
         :return:
         """
@@ -248,8 +322,8 @@ class Key:
                 return False
             key = str(t)
 
-        if mode not in ["down", "up"]:
-            self.log.error(f"mode {mode} not down or up")
+        mode = self.specification_mode(mode)
+        if mode is False:
             return False
 
         elif key not in self.key_function.keys():
@@ -257,21 +331,53 @@ class Key:
             return False
 
         elif self.key_function[key][mode]["open"] is False:
-            self.log.info(f"{key} {mode} mapping is closed")
+            self.log.debug(f"{key} {mode} mapping is closed")
             return False
 
-        elif self.key_function[key][mode]["function"] is None:
+        elif self.key_function[key][mode]["function"] is []:
             self.log.error(f"{key} {mode} mapping is None")
             return False
 
-        try:
-            self.key_function[key][mode]["function"](event=event)
-            self.log.info(f"{key} {mode} mapping run")
-            return True
-
-        except TypeError:
-            self.log.error(f"The mapping type of {key} in {mode} mode is not a function")
+        elif self.key_function[key][mode]["index"] < -1:
+            self.log.error(f"{key} {mode} mapping index < -1")
             return False
+
+        # run function
+        if self.key_function[key][mode]["index"] == -1:
+            while_flag = len(self.key_function[key][mode]["function"]) * 2
+        else:
+            while_flag = 2
+
+        t = 0
+        _t = []
+        while t < while_flag:
+            try:
+                if self.key_function[key][mode]["index"] != -1:
+                    if (
+                            self.key_function[key][mode]["index"] <= len(
+                                self.key_function[key][mode]["function"]
+                            ) - 1
+                    ):
+                        t = self.key_function[key][mode]["index"] * 2
+                        while_flag = t + 2
+                    else:
+                        self.log.error(f"{key} {mode} mapping index not in range")
+                        return False
+
+                self.log.debug(f"{key} {mode} mapping run\\index={t // 2}")
+                if t % 2 == 0:
+                    _t.append(self.key_function[key][mode]["function"][t // 2](event=event))
+                    t += 2
+                else:
+                    self.log.debug(f"no event")
+                    _t.append(self.key_function[key][mode]["function"][t // 2]())
+                    t += 1
+
+            except Exception as e:
+                self.log.error(f"{e}\\{t=}")
+                t += 1
+
+        return _t
 
 
 class MouseButton(Key):
