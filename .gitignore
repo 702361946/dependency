@@ -9,9 +9,7 @@ dist/
 font/
 image/
 language/
-
-modules/_pygame/docs/
+*.egg-info/
 
 *temp*.*
-_modules.md
 mypy.ini

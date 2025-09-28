@@ -1,0 +1,58 @@
+[project]
+name = "702361946_dependency" # package name
+description = "由702361946封装的轮子,用于简化操作流程" # package info
+version = "1.0.0" # package version
+dependencies = [] # 依赖项
+requires-python = ">= 3.10" # python version
+readme = "README.md"  # README file
+license = "MIT" # LICENSE type
+license-files = ["LICENSE"]  # LICENSE file path
+# all developer
+authors = [
+    # {name (and email)}
+    {name = "702361946", email = "702361946@QQ.com"}
+]
+
+# name_url
+[project.urls]
+github = "https://github.com/702361946/702361946_dependency"
+
+[project.optional-dependencies]
+"pygame" = ["pygame >= 2.6.0"]
+"pyside6" = ["pyside6 >= 6.9.0"]
+"sqlite3" = []
+"tkinter" = []
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "dependency",
+    "dependency._foundation",
+    "dependency.modules._pygame",
+    "dependency.modules._pyside6",
+    "dependency.modules._SQLite3",
+    "dependency.modules._tkinter",
+]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+"dependency" = "src/dependency"
+"dependency._foundation" = "src/dependency/_foundation"
+"dependency.modules._pygame" = "src/dependency/modules/_pygame"
+"dependency.modules._pyside6" = "src/dependency/modules/_pyside6"
+"dependency.modules._SQLite3" = "src/dependency/modules/_SQLite3"
+"dependency.modules._tkinter" = "src/dependency/modules/_tkinter"
+
+[tool.setuptools.package-data]
+"dependency._foundation" = ["*.md"]
+"dependency.modules._pygame" = ["*.md"]
+"dependency.modules._pyside6" = ["*.md"]
+"dependency.modules._SQLite3" = ["*.md"]
+"dependency.modules._tkinter" = ["*.md"]
+
+[tool.setuptools.exclude-package-data]
+"src.dependency" = ["temp.py"]
