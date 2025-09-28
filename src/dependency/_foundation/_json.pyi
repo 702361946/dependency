@@ -21,11 +21,14 @@ class Json(object):
         self.log = log
         ...
 
+    def dumps(self, a) -> str | bool:
+        ...
+
     def dump(self, a, file_name: str, file_path: list[str] | str | None = None) -> bool:
         ...
 
-    def load(self, file_name: str, file_path: list[str] | str | None = None):
+    def load(self, file_name: str, file_path: list[str] | str | None = None) -> dict | list | bool:
         ...
 
-    def log_get(self) -> None:
+    def loads(self, a) -> dict | list | bool:
         ...
