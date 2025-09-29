@@ -22,6 +22,7 @@ github = "https://github.com/702361946/702361946_dependency"
 "pyside6" = ["pyside6 >= 6.9.0"]
 "sqlite3" = []
 "tkinter" = []
+"qr" = ["qrcode >= 8.0", "pillow >= 11.0.0"]
 
 [build-system]
 requires = ["setuptools", "wheel"]
@@ -35,6 +36,7 @@ packages = [
     "dependency.modules._pyside6",
     "dependency.modules._SQLite3",
     "dependency.modules._tkinter",
+    "dependency.modules._QR"
 ]
 include-package-data = true
 
@@ -46,6 +48,7 @@ include-package-data = true
 "dependency.modules._pyside6" = "src/dependency/modules/_pyside6"
 "dependency.modules._SQLite3" = "src/dependency/modules/_SQLite3"
 "dependency.modules._tkinter" = "src/dependency/modules/_tkinter"
+"dependency.modules._QR" = "src/dependency/modules/_QR"
 
 [tool.setuptools.package-data]
 "dependency._foundation" = ["*.md"]
@@ -53,6 +56,7 @@ include-package-data = true
 "dependency.modules._pyside6" = ["*.md"]
 "dependency.modules._SQLite3" = ["*.md"]
 "dependency.modules._tkinter" = ["*.md"]
+"dependency.modules._QR" = ["*.md"]
 
 [tool.setuptools.exclude-package-data]
 "src.dependency" = ["temp.py"]
