@@ -8,8 +8,6 @@ lori = log_output_replace_identifications
 
 
 class Log:
-    all_logs: set[Log]
-
     def __init__(
             self,
             log_sign: str = "default",
@@ -24,7 +22,8 @@ class Log:
             log_output_to_file_encoding: str = "utf-8",
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
             get_code_file_and_line: bool = False,
-            get_code_len: int = 0
+            get_code_len: int = 0,
+            color: dict[str, tuple[int, int, int] | bool] | None = None
     ):
         """
         替换标识支持:time,sign,level,message,
@@ -51,6 +50,8 @@ class Log:
         self.otf = str(log_output_time_format)
         self.gcfal = bool(get_code_file_and_line)
         self.gcl = get_code_len
+        self.color = color or {"open": False}
+        self.colorama = None
         ...
 
     def level_if(self, level: str) -> bool:
@@ -60,6 +61,10 @@ class Log:
         :return: T/F
         """
         ...
+
+    def message_color(self, message: str, color: str) -> str: ...
+
+    def output_color(self, level: str, message="") -> bool: ...
 
     def output(self, level: str, message = "") -> bool:
         """
@@ -81,7 +86,5 @@ class Log:
     def critical(self, message = "") -> bool: ...
 
     def save(self, message = "", level: str = "DEBUG") -> bool: ...
-
-    def __del__(self): ...
 
     def dict_config(self) -> dict[str, int | bool | str | tuple[list[str], str]]: ...
