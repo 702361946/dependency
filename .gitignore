@@ -11,5 +11,5 @@ image/
 language/
 *.egg-info/
 
-*temp*.*
+temp.*
 mypy.ini
