@@ -15,7 +15,7 @@ log = Log(
     log_output_to_file_mode="w"
 )
 
-__varsion__ = "1.1.0"
+__version__ = "1.1.0"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 __all__ = [

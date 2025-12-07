@@ -3,13 +3,13 @@
 
 from ._component import *
 
-__varsion__ = "0.1.0"
+__version__ = "0.1.0"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 __all__ = [
     "Window",
     "TKComponent",
-    "__varsion__",
+    "__version__",
     "__author__",
     "__license__"
 ]
