@@ -1,26 +1,20 @@
-import json
 import os
-
-from ._file import File
+import tomlkit
 from .config import *
+from ._file import File
 
 fc = File()
 
-
-class Json(BaseClass):
+class Toml(BaseClass):
     def load(
             self,
             filename: str,
             filepath: str = ".\\",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-    ) -> dict | list | bool:
+    ) -> dict | bool:
         """
-        :param filename: 是否不带后缀决定于$add_file_ext
-        :param filepath:
-        :param encoding:
-        :param add_file_ext: 用于决定是否添加.json后缀
-        :return: False or file content
+
         """
         if not isinstance(filename, str):
             self.log.error(f"filename type not str\\{filename=}")
@@ -36,7 +30,7 @@ class Json(BaseClass):
             return False
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
         file_content = fc.load(file_path=filepath, encoding=encoding)
         if file_content is False:
@@ -44,9 +38,9 @@ class Json(BaseClass):
 
         # analysis
         try:
-            file_content = json.loads(file_content)
+            file_content = tomlkit.loads(file_content)
         except Exception as e:
-            self.log.error(f"{e}\\in json analysis")
+            self.log.error(f"{e}\\in toml analysis")
             return False
 
         return file_content
@@ -58,8 +52,6 @@ class Json(BaseClass):
             filepath: str = ".\\",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            ensure_ascii: bool = False,
-            indent: int | str | None = 4
     ) -> bool:
         """
         :param v: 写入的数据
@@ -67,8 +59,6 @@ class Json(BaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param ensure_ascii:
-        :param indent:
         :return: 写入成功标志位
         """
         if not isinstance(v, dict) and not isinstance(v, list):
@@ -87,13 +77,14 @@ class Json(BaseClass):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
 
-        v = json.dumps(v, ensure_ascii=ensure_ascii, indent=indent)
+        v = tomlkit.dumps(v)
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
         file_content = fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True
+
 

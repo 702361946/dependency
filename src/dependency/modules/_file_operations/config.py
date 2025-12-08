@@ -22,13 +22,13 @@ class BaseClass:
     """
     基础类
     """
-    def __init__(self, _log: Log | Logger):
+    def __init__(self, _log: Log | Logger = log):
         check_log(_log)
         self.log: Log = _log
         self.generation_time = time.time()
 
-    def load(self, *args, **kwargs) -> Any:
+    def load(self, file_path: str, *args, **kwargs) -> Any:
         pass
 
-    def dump(self, *args, **kwargs) -> Any:
+    def dump(self, v: Any, file_path: str, *args, **kwargs) -> Any:
         pass

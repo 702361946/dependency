@@ -25,7 +25,7 @@ class File(BaseClass):
             return False
 
         try:
-            with open(file_path, "r", encoding=encoding) as f:
+            with open(file_path, mode, encoding=encoding) as f:
                 return f.read()
         except Exception as e:
             self.log.error(f"{e}\\{file_path=}\\{encoding=}")
