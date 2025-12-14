@@ -9,12 +9,17 @@ class Toml(BaseClass):
     def load(
             self,
             filename: str,
-            filepath: str = ".\\",
+            filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
+            _fc: File = fc,
     ) -> dict | bool:
         """
-
+        :param filename:
+        :param filepath:
+        :param encoding:
+        :param add_file_ext:
+        :param _fc:
         """
         if not isinstance(filename, str):
             self.log.error(f"filename type not str\\{filename=}")
@@ -27,6 +32,9 @@ class Toml(BaseClass):
             return False
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
+            return False
+        elif not isinstance(_fc, File):
+            self.log.error(f"_fc type not File\\{_fc=}")
             return False
 
         if add_file_ext:
@@ -49,9 +57,10 @@ class Toml(BaseClass):
             self,
             v: dict | list,
             filename: str,
-            filepath: str = ".\\",
+            filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
+            _fc: File = fc,
     ) -> bool:
         """
         :param v: 写入的数据
@@ -59,6 +68,7 @@ class Toml(BaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
+        :param _fc:
         :return: 写入成功标志位
         """
         if not isinstance(v, dict) and not isinstance(v, list):
@@ -75,6 +85,9 @@ class Toml(BaseClass):
             return False
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
+            return False
+        elif not isinstance(_fc, File):
+            self.log.error(f"_fc type not File\\{_fc=}")
             return False
 
         v = tomlkit.dumps(v)

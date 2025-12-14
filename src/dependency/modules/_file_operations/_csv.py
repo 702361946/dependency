@@ -1,26 +1,26 @@
-import json
+import csv
+import io
 import os
 
-from ._file import File
 from .config import *
+from ._file import File
 
 fc = File()
 
-
-class Json(BaseClass):
+class CSV(BaseClass):
     def load(
             self,
             filename: str,
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc,
-    ) -> dict | list | bool:
+            _fc: File = fc
+    ) -> list[list] | bool:
         """
         :param filename: 是否不带后缀决定于$add_file_ext
         :param filepath:
         :param encoding:
-        :param add_file_ext: 用于决定是否添加.json后缀
+        :param add_file_ext: 用于决定是否添加.csv后缀
         :param _fc:
         :return: False or file content
         """
@@ -41,7 +41,7 @@ class Json(BaseClass):
             return False
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.csv"
         filepath = os.path.join(filepath, filename)
         file_content = _fc.load(file_path=filepath, encoding=encoding)
         if file_content is False:
@@ -49,23 +49,22 @@ class Json(BaseClass):
 
         # analysis
         try:
-            file_content = json.loads(file_content)
+            buffer = io.StringIO(file_content)
+            file_content = list(csv.reader(buffer))
         except Exception as e:
-            self.log.error(f"{e}\\in json analysis")
+            self.log.error(f"{e}\\in csv analysis")
             return False
 
         return file_content
 
     def dump(
             self,
-            v: dict | list,
+            v: list[list],
             filename: str,
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            ensure_ascii: bool = False,
-            indent: int | str | None = 4,
-            _fc: File = fc,
+            _fc: File = fc
     ) -> bool:
         """
         :param v: 写入的数据
@@ -73,12 +72,10 @@ class Json(BaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param ensure_ascii:
-        :param indent:
         :param _fc:
         :return: 写入成功标志位
         """
-        if not isinstance(v, dict) and not isinstance(v, list):
+        if not isinstance(v, list):
             self.log.error(f"v type not dict or list\\{v=}")
             return False
         elif not isinstance(filename, str):
@@ -93,23 +90,30 @@ class Json(BaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(ensure_ascii, bool):
-            self.log.error(f"ensure_ascii type not bool\\{ensure_ascii=}")
-            return False
-        elif not isinstance(indent, int):
-            self.log.error(f"indent type not int\\{indent=}")
-            return False
         elif not isinstance(_fc, File):
             self.log.error(f"_fc type not str\\{_fc=}")
             return False
 
-        v = json.dumps(v, ensure_ascii=ensure_ascii, indent=indent)
+        try:
+            buffer = io.StringIO()
+            writer = csv.writer(buffer)
+            writer.writerows(v)
+            v = buffer.getvalue()
+            # 紧凑化
+            t = ""
+            for i in v.split("\r\n"):
+                if not i:
+                    continue
+                t += i + "\n"
+            v = t[:-1] # -1用来删掉最后的\n
+        except Exception as e:
+            self.log.error(f"{e}\\in list[list] to csv")
+            return False
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.csv"
         filepath = os.path.join(filepath, filename)
-        file_content = fc.dump(v, file_path=filepath, encoding=encoding)
+        file_content = _fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True
-
