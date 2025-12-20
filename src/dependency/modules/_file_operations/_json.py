@@ -1,27 +1,23 @@
 import json
 import os
 
-from ._file import File
-from .config import *
-
-fc = File()
+from ._file import FileBaseClass
 
 
-class Json(BaseClass):
+class Json(FileBaseClass):
     def load(
             self,
             filename: str,
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc,
+            **kwargs
     ) -> dict | list | bool:
         """
         :param filename: 是否不带后缀决定于$add_file_ext
         :param filepath:
         :param encoding:
         :param add_file_ext: 用于决定是否添加.json后缀
-        :param _fc:
         :return: False or file content
         """
         if not isinstance(filename, str):
@@ -36,14 +32,11 @@ class Json(BaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not str\\{_fc=}")
-            return False
 
         if add_file_ext:
             filename = f"{filename}.json"
         filepath = os.path.join(filepath, filename)
-        file_content = _fc.load(file_path=filepath, encoding=encoding)
+        file_content = self._fc.load(file_path=filepath, encoding=encoding)
         if file_content is False:
             return False
 
@@ -65,7 +58,7 @@ class Json(BaseClass):
             add_file_ext: bool = True,
             ensure_ascii: bool = False,
             indent: int | str | None = 4,
-            _fc: File = fc,
+            **kwargs
     ) -> bool:
         """
         :param v: 写入的数据
@@ -75,7 +68,6 @@ class Json(BaseClass):
         :param add_file_ext:
         :param ensure_ascii:
         :param indent:
-        :param _fc:
         :return: 写入成功标志位
         """
         if not isinstance(v, dict) and not isinstance(v, list):
@@ -99,16 +91,13 @@ class Json(BaseClass):
         elif not isinstance(indent, int):
             self.log.error(f"indent type not int\\{indent=}")
             return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not str\\{_fc=}")
-            return False
 
         v = json.dumps(v, ensure_ascii=ensure_ascii, indent=indent)
 
         if add_file_ext:
             filename = f"{filename}.json"
         filepath = os.path.join(filepath, filename)
-        file_content = fc.dump(v, file_path=filepath, encoding=encoding)
+        file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True

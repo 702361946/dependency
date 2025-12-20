@@ -2,26 +2,22 @@ import csv
 import io
 import os
 
-from .config import *
-from ._file import File
+from ._file import FileBaseClass
 
-fc = File()
-
-class CSV(BaseClass):
+class CSV(FileBaseClass):
     def load(
             self,
             filename: str,
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc
+            **kwargs
     ) -> list[list] | bool:
         """
         :param filename: 是否不带后缀决定于$add_file_ext
         :param filepath:
         :param encoding:
         :param add_file_ext: 用于决定是否添加.csv后缀
-        :param _fc:
         :return: False or file content
         """
         if not isinstance(filename, str):
@@ -36,14 +32,11 @@ class CSV(BaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not str\\{_fc=}")
-            return False
 
         if add_file_ext:
             filename = f"{filename}.csv"
         filepath = os.path.join(filepath, filename)
-        file_content = _fc.load(file_path=filepath, encoding=encoding)
+        file_content = self._fc.load(file_path=filepath, encoding=encoding)
         if file_content is False:
             return False
 
@@ -64,7 +57,7 @@ class CSV(BaseClass):
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc
+            **kwargs
     ) -> bool:
         """
         :param v: 写入的数据
@@ -72,7 +65,6 @@ class CSV(BaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param _fc:
         :return: 写入成功标志位
         """
         if not isinstance(v, list):
@@ -89,9 +81,6 @@ class CSV(BaseClass):
             return False
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not str\\{_fc=}")
             return False
 
         try:
@@ -113,7 +102,7 @@ class CSV(BaseClass):
         if add_file_ext:
             filename = f"{filename}.csv"
         filepath = os.path.join(filepath, filename)
-        file_content = _fc.dump(v, file_path=filepath, encoding=encoding)
+        file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True

@@ -1,25 +1,22 @@
 import os
 import tomlkit
-from .config import *
-from ._file import File
 
-fc = File()
+from ._file import FileBaseClass
 
-class Toml(BaseClass):
+class Toml(FileBaseClass):
     def load(
             self,
             filename: str,
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc,
+            **kwargs
     ) -> dict | bool:
         """
         :param filename:
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param _fc:
         """
         if not isinstance(filename, str):
             self.log.error(f"filename type not str\\{filename=}")
@@ -33,14 +30,11 @@ class Toml(BaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not File\\{_fc=}")
-            return False
 
         if add_file_ext:
             filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
-        file_content = fc.load(file_path=filepath, encoding=encoding)
+        file_content = self._fc.load(file_path=filepath, encoding=encoding)
         if file_content is False:
             return False
 
@@ -60,7 +54,7 @@ class Toml(BaseClass):
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            _fc: File = fc,
+            **kwargs
     ) -> bool:
         """
         :param v: 写入的数据
@@ -68,7 +62,6 @@ class Toml(BaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param _fc:
         :return: 写入成功标志位
         """
         if not isinstance(v, dict) and not isinstance(v, list):
@@ -86,16 +79,13 @@ class Toml(BaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(_fc, File):
-            self.log.error(f"_fc type not File\\{_fc=}")
-            return False
 
         v = tomlkit.dumps(v)
 
         if add_file_ext:
             filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
-        file_content = fc.dump(v, file_path=filepath, encoding=encoding)
+        file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True
