@@ -67,9 +67,15 @@ class File(BaseClass):
                 return False
 
         try:
-            with open(file_path, mode, encoding=encoding) as f:
-                f.write(v)
-                return True
+            if mode == "b":
+                with open(file_path, mode) as f:
+                    f.write(v)
+
+            else:
+                with open(file_path, mode, encoding=encoding) as f:
+                    f.write(v)
+
+            return True
         except Exception as e:
             self.log.error(f"{e}\\{file_path=}\\{encoding=}")
             return False
@@ -131,9 +137,9 @@ class FileBaseClass(File):
             return False
 
         join_path = os.path.join(file_path, file_name)
-        if not os.path.isdir(join_path):
-            self.log.error(f"file_path does not exist\\{file_path=}")
-            return False
+        # if not os.path.isdir(join_path):
+        #     self.log.error(f"file_path does not exist\\{file_path=}")
+        #     return False
         return join_path
 
     def load(
