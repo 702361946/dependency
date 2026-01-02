@@ -3,6 +3,8 @@ import tomlkit
 
 from ._file import FileBaseClass
 
+# 暂未修改为解释器形式
+
 class Toml(FileBaseClass):
     def load(
             self,
@@ -35,12 +37,12 @@ class Toml(FileBaseClass):
             filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
         file_content = self._fc.load(file_path=filepath, encoding=encoding)
-        if file_content is False:
+        if not file_content.ok:
             return False
 
         # analysis
         try:
-            file_content = tomlkit.loads(file_content)
+            file_content = tomlkit.loads(file_content.v)
         except Exception as e:
             self.log.error(f"{e}\\in toml analysis")
             return False

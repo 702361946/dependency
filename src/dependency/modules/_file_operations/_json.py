@@ -3,6 +3,7 @@ import os
 
 from ._file import FileBaseClass
 
+# 暂未修改为解释器形式
 
 class Json(FileBaseClass):
     def load(
@@ -37,12 +38,12 @@ class Json(FileBaseClass):
             filename = f"{filename}.json"
         filepath = os.path.join(filepath, filename)
         file_content = self._fc.load(file_path=filepath, encoding=encoding)
-        if file_content is False:
+        if not file_content.ok:
             return False
 
         # analysis
         try:
-            file_content = json.loads(file_content)
+            file_content = json.loads(file_content.v)
         except Exception as e:
             self.log.error(f"{e}\\in json analysis")
             return False

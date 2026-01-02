@@ -7,30 +7,35 @@ class File(BaseClass):
             file_path: str,
             mode: str = "r",
             encoding: str = "UTF-8"
-    ) -> Any:
+    ) -> ReturnValue[str | bytes]:
         """
         :param file_path: 需要文件后缀
         :param mode: 允许"r","b"
         :param encoding:
-        :return: 当触发ERROR时返回False
+        :return: 当触发ERROR时返回RV(False)
+        因为使用的是f.read(),故读大文件(>=1GB)有概率内存溢出,请小心使用
         """
         if not isinstance(file_path, str):
             self.log.warning("file_path type not str")
-            return False
+            return ReturnValue(False)
         if not isinstance(encoding, str):
             self.log.warning("encoding type not str")
-            return False
+            return ReturnValue(False)
 
         if mode not in ["r", "b"]:
             self.log.warning(f"mode value not 'r' or 'b'\\{mode=}")
-            return False
+            return ReturnValue(False)
 
         try:
-            with open(file_path, mode, encoding=encoding) as f:
-                return f.read()
+            if mode == "b":
+                with open(file_path, mode) as f:
+                    return ReturnValue(True, f.read())
+            else:
+                with open(file_path, mode, encoding=encoding) as f:
+                    return ReturnValue(True, f.read())
         except Exception as e:
             self.log.error(f"{e}\\{file_path=}\\{encoding=}")
-            return False
+            return ReturnValue(False)
 
     def dump(
             self,
@@ -150,13 +155,13 @@ class FileBaseClass(File):
             encoding: str = "UTF-8",
             *args,
             **kwargs
-    ) -> str | bytes | bool:
+    ) -> ReturnValue[str | bytes]:
         """
         当{file_path}为None时,将使用{self.file_path}
         """
         file_path = self._path_check(file_name, file_path)
         if file_path is False:
-            return False
+            return ReturnValue(False)
         return self._fc.load(file_path, mode, encoding)
 
     def dump(

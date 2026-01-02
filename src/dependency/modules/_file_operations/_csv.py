@@ -4,6 +4,8 @@ import os
 
 from ._file import FileBaseClass
 
+# 暂未修改为解释器形式
+
 class CSV(FileBaseClass):
     def load(
             self,
@@ -37,12 +39,12 @@ class CSV(FileBaseClass):
             filename = f"{filename}.csv"
         filepath = os.path.join(filepath, filename)
         file_content = self._fc.load(file_path=filepath, encoding=encoding)
-        if file_content is False:
+        if not file_content.ok:
             return False
 
         # analysis
         try:
-            buffer = io.StringIO(file_content)
+            buffer = io.StringIO(file_content.v)
             file_content = list(csv.reader(buffer))
         except Exception as e:
             self.log.error(f"{e}\\in csv analysis")

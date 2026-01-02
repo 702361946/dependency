@@ -11,57 +11,31 @@ class Ini(Interpreter):
             _fc: FileBaseClass = FileBaseClass()
     ):
         super().__init__(_log, file_save_path, _fc)
-        self.set_interpreter(self.ini_interpreter)
+        self.set_interpreter_r(self.ini_interpreter_r)
+        self.set_interpreter_w(self.ini_interpreter_w)
 
-    def ini_interpreter(self, text: str) -> bool | dict[str, Any]:
+    def ini_interpreter_r(self, text: str) -> dict[str, Any]:
         if not isinstance(text, str):
             self.log.error(f"ini interpreter need str, got {type(text)}")
-            return False
+            raise TypeError(f"ini interpreter need str, got {type(text)}")
         try:
             cp = configparser.ConfigParser()
             cp.read_string(text)
             v = {sect: dict(cp[sect]) for sect in cp.sections()}
             return v
         except Exception as e:
-            self.log.error(f"{e} \\ in ini_interpreter")
-            return False
+            self.log.error(f"{e} \\ in ini_interpreter_r")
+            raise e
 
-    def load(
-            self,
-            file_name: str,
-            file_path: str | None = None,
-            mode: str = "r",
-            encoding: str = "UTF-8",
-            *args,
-            **kwargs
-    ):
-        v = self._fc.load(
-            file_name = file_name,
-            file_path = file_path,
-            mode = mode,
-            encoding = encoding,
-        )
-
-        return self.interpreter(v)
-
-    def dump(
-            self,
-            v: dict[str, dict[str, Any]],
-            file_name: str,
-            file_path: str | None = None,
-            encoding: str = "UTF-8",
-            **kwargs,
-    ) -> bool:
-        """嵌套 dict -> ini 文件"""
-        if not isinstance(v, dict):
-            self.log.error(f"dump need dict, got {type(v)}")
-            return False
-
+    def ini_interpreter_w(self, v: dict[str, dict[str, Any]]) -> str:
+        """
+        v应符合https://docs.python.org/3/library/configparser.html所定义的标准
+        """
         cp = configparser.ConfigParser()
         for sect, opts in v.items():
             if not isinstance(opts, dict):
                 self.log.error(f"section '{sect}' must be dict, got {type(opts)}")
-                return False
+                raise TypeError(f"section '{sect}' must be dict, got {type(opts)}")
             try:
                 cp.add_section(sect)
             except configparser.DuplicateSectionError:
@@ -73,8 +47,56 @@ class Ini(Interpreter):
             cp.write(s)
             text = s.getvalue()
 
+        return text
+
+    def load(
+            self,
+            file_name: str,
+            file_path: str | None = None,
+            mode: str = "r",
+            encoding: str = "UTF-8",
+            add_file_ext: bool = True,
+            *args,
+            **kwargs
+    ) -> ReturnValue[dict[str, Any]]:
+        if add_file_ext and file_name:
+            file_name += ".ini"
+
+        v = self._fc.load(
+            file_name = file_name,
+            file_path = file_path,
+            mode = mode,
+            encoding = encoding,
+        )
+        if not v.ok:
+            return ReturnValue(False)
+
+        return self.interpreter(v.v, "r")
+
+    def dump(
+            self,
+            v: dict[str, dict[str, Any]],
+            file_name: str,
+            file_path: str | None = None,
+            encoding: str = "UTF-8",
+            add_file_ext: bool = True,
+            *args,
+            **kwargs,
+    ) -> bool:
+        """嵌套 dict -> ini 文件"""
+        if not isinstance(v, dict):
+            self.log.error(f"dump need dict, got {type(v)}")
+            return False
+
+        if add_file_ext and file_name:
+            file_name += ".ini"
+
+        v = self.interpreter(v, "w")
+        if not v.ok:
+            return False
+
         return self._fc.dump(
-            text,
+            v.v,
             file_name,
             file_path,
             mode="w",

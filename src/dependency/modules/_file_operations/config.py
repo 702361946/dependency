@@ -1,6 +1,7 @@
 import time
 from typing import Any
 from logging import Logger
+from typing import Generic, TypeVar
 
 from ._get_package import Log, log_path
 
@@ -18,6 +19,36 @@ def check_log(_log: Log | Logger) -> bool:
 
     return True
 
+T = TypeVar("T")
+
+
+class ReturnValue(Generic[T]):
+    """
+    专为返回bool, v值的func设的检查类
+    """
+    __slots__ = ("ok", "v")
+    def __init__(self, ok: bool = False, v: Any = None):
+        self.ok = ok
+        self.v = v
+
+    def __call__(self, default: Any = None) -> Any:
+        """
+        rv()->rv.get()
+        """
+        return self.get(default=default)
+
+    def get(self, default: Any = None) -> Any:
+        if self.ok:
+            return self.v
+        return default
+
+    def unwrap(self) -> Any:
+        """
+        强制解包
+        """
+        return self.v if self.ok else None
+
+
 class BaseClass:
     """
     基础类
@@ -27,8 +58,8 @@ class BaseClass:
         self.log: Log = _log
         self.generation_time = time.time()
 
-    def load(self, file_path: str, *args, **kwargs) -> Any:
+    def load(self, file_path: str, *args, **kwargs) -> ReturnValue:
         pass
 
-    def dump(self, v: Any, file_path: str, *args, **kwargs) -> Any:
+    def dump(self, v: Any, file_path: str, *args, **kwargs) -> bool:
         pass

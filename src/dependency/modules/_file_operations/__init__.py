@@ -1,3 +1,4 @@
+from .config import ReturnValue, BaseClass
 from ._file import File, FileBaseClass
 from ._interpreter import Interpreter
 from ._csv import CSV
@@ -9,6 +10,8 @@ __version__ = "0.0.1"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 __all__ = [
+    'ReturnValue',
+    'BaseClass',
     'File',
     'FileBaseClass',
     'Json',
