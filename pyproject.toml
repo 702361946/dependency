@@ -1,7 +1,8 @@
+# python -m build
 [project]
 name = "702361946_dependency" # package name
 description = "由702361946封装的轮子,用于简化操作流程" # package info
-version = "1.0.0" # package version
+version = "1.1.0" # package version
 dependencies = [] # 依赖项
 requires-python = ">= 3.10" # python version
 readme = "README.md"  # README file
