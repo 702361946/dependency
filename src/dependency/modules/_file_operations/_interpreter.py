@@ -16,10 +16,10 @@ class Interpreter(FileBaseClass):
             _interpreter_w = None
     ):
         super().__init__(_log, file_save_path)
-        if not isinstance(_fc, FileBaseClass):
-            self.log.error("Interpreter must be a FileBaseClass object")
+        if _fc is None:
             _fc = FileBaseClass(file_save_path=file_save_path)
-        elif _fc is None:
+        elif not isinstance(_fc, FileBaseClass):
+            self.log.error("Interpreter must be a FileBaseClass object")
             _fc = FileBaseClass(file_save_path=file_save_path)
         self._fc = _fc
 
