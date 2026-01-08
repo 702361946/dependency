@@ -1,11 +1,16 @@
-import json
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
+
 import os
+import tomlkit
 
 from ._file import FileBaseClass
 
 # 暂未修改为解释器形式
 
-class Json(FileBaseClass):
+class Toml(FileBaseClass):
     def load(
             self,
             filename: str,
@@ -13,13 +18,12 @@ class Json(FileBaseClass):
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             **kwargs
-    ) -> dict | list | bool:
+    ) -> dict | bool:
         """
-        :param filename: 是否不带后缀决定于$add_file_ext
+        :param filename:
         :param filepath:
         :param encoding:
-        :param add_file_ext: 用于决定是否添加.json后缀
-        :return: False or file content
+        :param add_file_ext:
         """
         if not isinstance(filename, str):
             self.log.error(f"filename type not str\\{filename=}")
@@ -35,7 +39,7 @@ class Json(FileBaseClass):
             return False
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
         file_content = self._fc.load(file_path=filepath, encoding=encoding)
         if not file_content.ok:
@@ -43,9 +47,9 @@ class Json(FileBaseClass):
 
         # analysis
         try:
-            file_content = json.loads(file_content.v)
+            file_content = tomlkit.loads(file_content.v)
         except Exception as e:
-            self.log.error(f"{e}\\in json analysis")
+            self.log.error(f"{e}\\in toml analysis")
             return False
 
         return file_content
@@ -57,8 +61,6 @@ class Json(FileBaseClass):
             filepath: str = ".",
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
-            ensure_ascii: bool = False,
-            indent: int | str | None = 4,
             **kwargs
     ) -> bool:
         """
@@ -67,8 +69,6 @@ class Json(FileBaseClass):
         :param filepath:
         :param encoding:
         :param add_file_ext:
-        :param ensure_ascii:
-        :param indent:
         :return: 写入成功标志位
         """
         if not isinstance(v, dict) and not isinstance(v, list):
@@ -86,20 +86,15 @@ class Json(FileBaseClass):
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
             return False
-        elif not isinstance(ensure_ascii, bool):
-            self.log.error(f"ensure_ascii type not bool\\{ensure_ascii=}")
-            return False
-        elif not isinstance(indent, int):
-            self.log.error(f"indent type not int\\{indent=}")
-            return False
 
-        v = json.dumps(v, ensure_ascii=ensure_ascii, indent=indent)
+        v = tomlkit.dumps(v)
 
         if add_file_ext:
-            filename = f"{filename}.json"
+            filename = f"{filename}.toml"
         filepath = os.path.join(filepath, filename)
         file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
         if not file_content:
             return False
         return True
+
 

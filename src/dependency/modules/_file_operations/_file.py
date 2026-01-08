@@ -1,3 +1,8 @@
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
+
 import os
 from .config import *
 
@@ -107,7 +112,6 @@ class FileBaseClass(File):
                              f'file_save_path value set "."\n{file_save_path=}')
         elif not os.path.isdir(file_save_path):
             self.log.error(f"file_save_path does not exist\\{file_save_path=}")
-            raise FileNotFoundError(f"file_save_path does not exist\\{file_save_path=}")
 
         self.file_path = file_save_path
         self.generation_time = time.time()

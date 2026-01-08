@@ -1,3 +1,8 @@
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
+
 from ._file import *
 
 
@@ -6,11 +11,16 @@ class Interpreter(FileBaseClass):
             self,
             _log: Log | Logger = log,
             file_save_path: str = ".",
-            _fc: FileBaseClass = FileBaseClass(),
+            _fc: FileBaseClass = None,
             _interpreter_r = None,
             _interpreter_w = None
     ):
         super().__init__(_log, file_save_path)
+        if not isinstance(_fc, FileBaseClass):
+            self.log.error("Interpreter must be a FileBaseClass object")
+            _fc = FileBaseClass(file_save_path=file_save_path)
+        elif _fc is None:
+            _fc = FileBaseClass(file_save_path=file_save_path)
         self._fc = _fc
 
         self._interpreter_r = _interpreter_r

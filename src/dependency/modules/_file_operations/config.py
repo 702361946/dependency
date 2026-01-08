@@ -1,3 +1,10 @@
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
+
+from __future__ import annotations
+
 import time
 from typing import Any
 from logging import Logger
@@ -27,9 +34,13 @@ class ReturnValue(Generic[T]):
     专为返回bool, v值的func设的检查类
     """
     __slots__ = ("ok", "v")
-    def __init__(self, ok: bool = False, v: Any = None):
-        self.ok = ok
-        self.v = v
+    def __init__(self, ok: bool = False, v: Any | ReturnValue[Any] = None):
+        if isinstance(v, ReturnValue):
+            self.ok = v.ok
+            self.v = v.v
+        else:
+            self.ok = ok
+            self.v = v
 
     def __call__(self, default: Any = None) -> Any:
         """

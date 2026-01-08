@@ -1,18 +1,28 @@
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
+
 import configparser
 import io
 
 from ._interpreter import *
+
 
 class Ini(Interpreter):
     def __init__(
             self,
             _log: Log | Logger = log,
             file_save_path: str = ".",
-            _fc: FileBaseClass = FileBaseClass()
+            _fc: FileBaseClass = None,
     ):
-        super().__init__(_log, file_save_path, _fc)
-        self.set_interpreter_r(self.ini_interpreter_r)
-        self.set_interpreter_w(self.ini_interpreter_w)
+        super().__init__(
+            _log=_log,
+            file_save_path=file_save_path,
+            _fc=_fc,
+            _interpreter_r=self.ini_interpreter_r,
+            _interpreter_w=self.ini_interpreter_w
+        )
 
     def ini_interpreter_r(self, text: str) -> dict[str, Any]:
         if not isinstance(text, str):
