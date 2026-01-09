@@ -55,6 +55,7 @@ class Interpreter(FileBaseClass):
             self,
             v: Any,
             mode: str = "r",
+            **kwargs
     ) -> ReturnValue[Any]:
         """
         :param v:
@@ -68,9 +69,9 @@ class Interpreter(FileBaseClass):
         try:
             match mode:
                 case "r":
-                    v = self._interpreter_r(v)
+                    v = self._interpreter_r(v, **kwargs)
                 case "w":
-                    v = self._interpreter_w(v)
+                    v = self._interpreter_w(v, **kwargs)
                 case _:
                     log.error(f"not mode\\{mode=}")
                     return ReturnValue(False)
