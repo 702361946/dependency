@@ -1,15 +1,13 @@
-__pycache__/
-*temp*/
 .idea/
-log/
-json/
 .mypy_cache/
-music/
-dist/
-font/
-image/
-language/
+*temp*/
 *.egg-info/
+__pycache__/
+dist/
+log/
+build/
 
 temp.*
+
+.editorconfig
 mypy.ini
