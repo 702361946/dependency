@@ -4,56 +4,64 @@
 #  https://github.com/702361946
 
 import json
-import os
 
-from ._file import FileBaseClass
+from ._interpreter import *
 
-# 暂未修改为解释器形式
+class Json(Interpreter):
+    def __init__(
+            self,
+            _log: Log | Logger = log,
+            file_save_path: str = ".",
+            _fc: FileBaseClass = None
+    ):
+        super().__init__(
+            _log=_log,
+            file_save_path=file_save_path,
+            _fc=_fc,
+            _interpreter_r=json.loads,
+            _interpreter_w=json.dumps
+        )
 
-class Json(FileBaseClass):
     def load(
             self,
             filename: str,
-            filepath: str = ".",
+            filepath: str = None,
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             **kwargs
-    ) -> dict | list | bool:
+    ) -> ReturnValue[dict | list]:
         """
         :param filename: 是否不带后缀决定于$add_file_ext
         :param filepath:
         :param encoding:
         :param add_file_ext: 用于决定是否添加.json后缀
-        :return: False or file content
+        :return: RV[False or file content]
         """
-        if not isinstance(filename, str):
-            self.log.error(f"filename type not str\\{filename=}")
-            return False
-        elif not isinstance(filepath, str):
-            self.log.error(f"filepath type not str\\{filepath=}")
-            return False
-        elif not isinstance(encoding, str):
+        if not isinstance(encoding, str):
             self.log.error(f"encoding type not str\\{encoding=}")
-            return False
+            return ReturnValue(False)
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
+            return ReturnValue(False)
 
         if add_file_ext:
             filename = f"{filename}.json"
-        filepath = os.path.join(filepath, filename)
-        file_content = self._fc.load(file_path=filepath, encoding=encoding)
-        if not file_content.ok:
-            return False
+        v = self._fc.load(
+            file_name=filename,
+            file_path=filepath,
+            encoding=encoding
+        )
+        if not v.ok:
+            return ReturnValue(False)
 
         # analysis
         try:
-            file_content = json.loads(file_content.v)
+            v = self.interpreter(v.v, "r")
         except Exception as e:
             self.log.error(f"{e}\\in json analysis")
-            return False
+            return ReturnValue(False)
 
-        return file_content
+        return v
 
     def dump(
             self,
@@ -79,12 +87,6 @@ class Json(FileBaseClass):
         if not isinstance(v, dict) and not isinstance(v, list):
             self.log.error(f"v type not dict or list\\{v=}")
             return False
-        elif not isinstance(filename, str):
-            self.log.error(f"filename type not str\\{filename=}")
-            return False
-        elif not isinstance(filepath, str):
-            self.log.error(f"filepath type not str\\{filepath=}")
-            return False
         elif not isinstance(encoding, str):
             self.log.error(f"encoding type not str\\{encoding=}")
             return False
@@ -98,13 +100,17 @@ class Json(FileBaseClass):
             self.log.error(f"indent type not int\\{indent=}")
             return False
 
-        v = json.dumps(v, ensure_ascii=ensure_ascii, indent=indent)
+        v = self.interpreter(v, "w", ensure_ascii=ensure_ascii, indent=indent)
+        if not v.ok:
+            return False
 
         if add_file_ext:
             filename = f"{filename}.json"
-        filepath = os.path.join(filepath, filename)
-        file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
-        if not file_content:
-            return False
-        return True
+        file_content = self._fc.dump(
+            v.v,
+            file_name=filename,
+            file_path=filepath,
+            encoding=encoding
+        )
+        return file_content
 
