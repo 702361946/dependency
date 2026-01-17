@@ -11,7 +11,9 @@ class File(BaseClass):
             self,
             file_path: str,
             mode: str = "r",
-            encoding: str = "UTF-8"
+            encoding: str = "UTF-8",
+            *args,
+            **kwargs
     ) -> ReturnValue[str | bytes]:
         """
         :param file_path: 需要文件后缀
@@ -22,14 +24,17 @@ class File(BaseClass):
         """
         if not isinstance(file_path, str):
             self.log.warning("file_path type not str")
-            return ReturnValue(False)
+            return ReturnValue(False, TypeError("file_path type not str"))
         if not isinstance(encoding, str):
             self.log.warning("encoding type not str")
-            return ReturnValue(False)
+            return ReturnValue(False, TypeError("encoding type not str"))
 
         if mode not in ["r", "b"]:
             self.log.warning(f"mode value not 'r' or 'b'\\{mode=}")
-            return ReturnValue(False)
+            return ReturnValue(
+                False,
+                TypeError(f"mode value not 'r' or 'b'\\{mode=}")
+            )
 
         try:
             if mode == "b":
@@ -40,7 +45,7 @@ class File(BaseClass):
                     return ReturnValue(True, f.read())
         except Exception as e:
             self.log.error(f"{e}\\{file_path=}\\{encoding=}")
-            return ReturnValue(False)
+            return ReturnValue(False, e)
 
     def dump(
             self,
@@ -48,7 +53,9 @@ class File(BaseClass):
             file_path: str,
             mode: str = "w",
             encoding: str = "UTF-8",
-    ) -> bool:
+            *args,
+            **kwargs
+    ) -> ReturnValue[Any]:
         """
         :param v: 写入的值,在w or a模式下必须为str,在b模式下必须为二进制原始数据
         :param file_path: 需要带后缀
@@ -58,23 +65,26 @@ class File(BaseClass):
         """
         if not isinstance(file_path, str):
             self.log.warning("file_path type not str")
-            return False
+            return ReturnValue(False, TypeError(f"file_path type not str"))
         if not isinstance(encoding, str):
             self.log.warning("encoding type not str")
-            return False
+            return ReturnValue(False, TypeError(f"encoding type not str"))
 
         match mode:
             case "w" | "a":
                 if not isinstance(v, str):
                     self.log.error(f"v type not str\\{v=}")
-                    return False
+                    return ReturnValue(False, TypeError(f"v type not str\\{v=}"))
             case "b":
                 if not isinstance(v, bytes):
                     self.log.error(f"v type not bytes\\{v=}")
-                    return False
+                    return ReturnValue(False, TypeError(f"v type not bytes\\{v=}"))
             case _:
                 self.log.error(f"mode value not 'w' or 'a' or 'b'\\{mode=}")
-                return False
+                return ReturnValue(
+                    False,
+                    TypeError(f"mode value not 'w' or 'a' or 'b'\\{mode=}")
+                )
 
         try:
             if mode == "b":
@@ -85,10 +95,10 @@ class File(BaseClass):
                 with open(file_path, mode, encoding=encoding) as f:
                     f.write(v)
 
-            return True
+            return ReturnValue(True)
         except Exception as e:
             self.log.error(f"{e}\\{file_path=}\\{encoding=}")
-            return False
+            return ReturnValue(False, e)
 
 
 class FileBaseClass(File):
@@ -121,7 +131,7 @@ class FileBaseClass(File):
             self,
             file_name: str,
             file_path: str | None = None,
-    ) -> bool | str:
+    ) -> ReturnValue[str]:
         """
         通过检查返回路径, 未通过返回False
         :param file_name:
@@ -136,20 +146,27 @@ class FileBaseClass(File):
                                  f"{file_name=}")
         else:
             self.log.warning(f"file_name is None\\in path check\\{file_name=}")
-            return False
+            return ReturnValue(False, ValueError(
+                f"file_name is None\\in path check\\{file_name=}"
+            ))
 
         if file_path:
             if not isinstance(file_path, str):
                 self.log.warning(f"file_path type not str\\in path check\\{file_path=}")
         else:
             self.log.warning(f"file_path is None\\in path check\\{file_path=}")
-            return False
+            return ReturnValue(False, ValueError(
+                f"file_path is None\\in path check\\{file_path=}"
+            ))
 
         join_path = os.path.join(file_path, file_name)
         # if not os.path.isdir(join_path):
         #     self.log.error(f"file_path does not exist\\{file_path=}")
         #     return False
-        return join_path
+
+        # 补全路径
+        os.makedirs(join_path, exist_ok=True)
+        return ReturnValue(True, join_path)
 
     def load(
             self,
@@ -164,9 +181,9 @@ class FileBaseClass(File):
         当{file_path}为None时,将使用{self.file_path}
         """
         file_path = self._path_check(file_name, file_path)
-        if file_path is False:
-            return ReturnValue(False)
-        return self._fc.load(file_path, mode, encoding)
+        if not file_path.ok:
+            return file_path
+        return self._fc.load(file_path.v, mode, encoding, *args, **kwargs)
 
     def dump(
             self,
@@ -177,15 +194,15 @@ class FileBaseClass(File):
             encoding: str = "UTF-8",
             *args,
             **kwargs
-    ) -> bool:
+    ) -> ReturnValue[Any]:
         """
         {v}为要写入的值
         当{file_path}为None时,将使用{self.file_path}
         """
         file_path = self._path_check(file_name, file_path)
-        if file_path is False:
-            return False
-        return self._fc.dump(v, file_path, mode, encoding)
+        if not file_path.ok:
+            return file_path
+        return self._fc.dump(v, file_path.v, mode, encoding, *args, **kwargs)
 
     def set_fc(self, new_fc: File) -> bool:
         # 是否允许用户自行拓展有待深究

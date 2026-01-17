@@ -8,6 +8,7 @@ import io
 
 from ._interpreter import *
 
+
 class CSV(Interpreter):
     def __init__(
             self,
@@ -35,7 +36,7 @@ class CSV(Interpreter):
             return ReturnValue(True, list(csv.reader(buffer)))
         except Exception as e:
             self.log.error(f"{e}\\in csv analysis")
-            return ReturnValue(False)
+            return ReturnValue(False, e)
 
     def csv_interpreter_w(self, v: list[list[Any]]) -> ReturnValue[str]:
         """
@@ -43,7 +44,7 @@ class CSV(Interpreter):
         """
         if not isinstance(v, list):
             self.log.error(f"v type not dict or list\\{v=}")
-            return ReturnValue(False)
+            return ReturnValue(False, TypeError(f"v type not dict or list\\{v=}"))
 
         try:
             buffer = io.StringIO()
@@ -61,7 +62,7 @@ class CSV(Interpreter):
             return ReturnValue(True, v)
         except Exception as e:
             self.log.error(f"{e}\\in list[list] to csv")
-            return ReturnValue(False)
+            return ReturnValue(False, e)
 
     def load(
             self,
@@ -78,24 +79,22 @@ class CSV(Interpreter):
         :param add_file_ext: 用于决定是否添加.csv后缀
         :return: False or file content
         """
-        if not isinstance(encoding, str):
-            self.log.error(f"encoding type not str\\{encoding=}")
-            return ReturnValue(False)
-        elif not isinstance(add_file_ext, bool):
+        if not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return ReturnValue(False)
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
 
         if add_file_ext:
             filename = f"{filename}.csv"
         file_content = self._fc.load(
             file_name=filename,
             file_path=filepath,
-            encoding=encoding
+            encoding=encoding,
+            **kwargs
         )
         if not file_content.ok:
-            return ReturnValue(False)
+            return ReturnValue(False, file_content)
 
-        return self.interpreter(file_content.v, "r")
+        return self.interpreter(file_content.v, "r", **kwargs)
 
     def dump(
             self,
@@ -105,7 +104,7 @@ class CSV(Interpreter):
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             **kwargs
-    ) -> bool:
+    ) -> ReturnValue[Any]:
         """
         :param v: 写入的数据, 要求为矩阵, 同时一定是python库csv支持转换的值类型
         :param filename:
@@ -116,22 +115,21 @@ class CSV(Interpreter):
         """
         if not isinstance(encoding, str):
             self.log.error(f"encoding type not str\\{encoding=}")
-            return False
+            return ReturnValue(False, TypeError(f"encoding type not str\\{encoding=}"))
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
 
-        v = self.interpreter(v, "w")
+        v = self.interpreter(v, "w", **kwargs)
         if not v.ok:
-            return False
+            return v
 
         if add_file_ext:
             filename = f"{filename}.csv"
-        file_content = self._fc.dump(
+        return self._fc.dump(
             v.v,
             file_name=filename,
             file_path=filepath,
-            encoding=encoding
+            encoding=encoding,
+            **kwargs
         )
-
-        return file_content

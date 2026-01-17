@@ -7,6 +7,7 @@ import json
 
 from ._interpreter import *
 
+
 class Json(Interpreter):
     def __init__(
             self,
@@ -37,29 +38,27 @@ class Json(Interpreter):
         :param add_file_ext: 用于决定是否添加.json后缀
         :return: RV[False or file content]
         """
-        if not isinstance(encoding, str):
-            self.log.error(f"encoding type not str\\{encoding=}")
-            return ReturnValue(False)
-        elif not isinstance(add_file_ext, bool):
+        if not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return ReturnValue(False)
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
 
         if add_file_ext:
             filename = f"{filename}.json"
         v = self._fc.load(
             file_name=filename,
             file_path=filepath,
-            encoding=encoding
+            encoding=encoding,
+            **kwargs
         )
         if not v.ok:
-            return ReturnValue(False)
+            return ReturnValue(False, v)
 
         # analysis
         try:
-            v = self.interpreter(v.v, "r")
+            v = self.interpreter(v.v, "r", **kwargs)
         except Exception as e:
             self.log.error(f"{e}\\in json analysis")
-            return ReturnValue(False)
+            return ReturnValue(False, e)
 
         return v
 
@@ -73,7 +72,7 @@ class Json(Interpreter):
             ensure_ascii: bool = False,
             indent: int | str | None = 4,
             **kwargs
-    ) -> bool:
+    ) -> ReturnValue[Any]:
         """
         :param v: 写入的数据
         :param filename:
@@ -86,31 +85,28 @@ class Json(Interpreter):
         """
         if not isinstance(v, dict) and not isinstance(v, list):
             self.log.error(f"v type not dict or list\\{v=}")
-            return False
-        elif not isinstance(encoding, str):
-            self.log.error(f"encoding type not str\\{encoding=}")
-            return False
+            return ReturnValue(False, TypeError(f"v type not dict or list\\{v=}"))
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
         elif not isinstance(ensure_ascii, bool):
             self.log.error(f"ensure_ascii type not bool\\{ensure_ascii=}")
-            return False
+            return ReturnValue(False, TypeError(f"ensure_ascii type not bool\\{ensure_ascii=}"))
         elif not isinstance(indent, int):
             self.log.error(f"indent type not int\\{indent=}")
-            return False
+            return ReturnValue(False, TypeError(f"indent type not int\\{indent=}"))
 
-        v = self.interpreter(v, "w", ensure_ascii=ensure_ascii, indent=indent)
+        v = self.interpreter(v, "w", ensure_ascii=ensure_ascii, indent=indent, **kwargs)
         if not v.ok:
-            return False
+            return v
 
         if add_file_ext:
             filename = f"{filename}.json"
-        file_content = self._fc.dump(
+        return self._fc.dump(
             v.v,
             file_name=filename,
             file_path=filepath,
-            encoding=encoding
+            encoding=encoding,
+            **kwargs
         )
-        return file_content
 

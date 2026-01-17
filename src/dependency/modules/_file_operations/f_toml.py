@@ -3,14 +3,26 @@
 #  702361946@qq.com
 #  https://github.com/702361946
 
-import os
 import tomlkit
 
-from ._file import FileBaseClass
+from ._interpreter import *
 
-# 暂未修改为解释器形式
 
-class Toml(FileBaseClass):
+class Toml(Interpreter):
+    def __init__(
+            self,
+            _log: Log | Logger = log,
+            file_save_path: str = ".",
+            _fc: FileBaseClass = None
+    ):
+        super().__init__(
+            _log=_log,
+            file_save_path=file_save_path,
+            _fc=_fc,
+            _interpreter_r=tomlkit.loads,
+            _interpreter_w=tomlkit.dumps
+        )
+
     def load(
             self,
             filename: str,
@@ -18,41 +30,30 @@ class Toml(FileBaseClass):
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             **kwargs
-    ) -> dict | bool:
+    ) -> ReturnValue[dict]:
         """
         :param filename:
         :param filepath:
         :param encoding:
         :param add_file_ext:
         """
-        if not isinstance(filename, str):
-            self.log.error(f"filename type not str\\{filename=}")
-            return False
-        elif not isinstance(filepath, str):
-            self.log.error(f"filepath type not str\\{filepath=}")
-            return False
-        elif not isinstance(encoding, str):
-            self.log.error(f"encoding type not str\\{encoding=}")
-            return False
-        elif not isinstance(add_file_ext, bool):
+        if not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
 
         if add_file_ext:
             filename = f"{filename}.toml"
-        filepath = os.path.join(filepath, filename)
-        file_content = self._fc.load(file_path=filepath, encoding=encoding)
+        file_content = self._fc.load(
+            file_name=filename,
+            file_path=filepath,
+            encoding=encoding,
+            **kwargs
+        )
         if not file_content.ok:
-            return False
+            return ReturnValue(False, file_content)
 
         # analysis
-        try:
-            file_content = tomlkit.loads(file_content.v)
-        except Exception as e:
-            self.log.error(f"{e}\\in toml analysis")
-            return False
-
-        return file_content
+        return self.interpreter(file_content.v, "r", **kwargs)
 
     def dump(
             self,
@@ -62,7 +63,7 @@ class Toml(FileBaseClass):
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             **kwargs
-    ) -> bool:
+    ) -> ReturnValue[Any]:
         """
         :param v: 写入的数据
         :param filename:
@@ -73,28 +74,21 @@ class Toml(FileBaseClass):
         """
         if not isinstance(v, dict) and not isinstance(v, list):
             self.log.error(f"v type not dict or list\\{v=}")
-            return False
-        elif not isinstance(filename, str):
-            self.log.error(f"filename type not str\\{filename=}")
-            return False
-        elif not isinstance(filepath, str):
-            self.log.error(f"filepath type not str\\{filepath=}")
-            return False
-        elif not isinstance(encoding, str):
-            self.log.error(f"encoding type not str\\{encoding=}")
-            return False
+            return ReturnValue(False, TypeError(f"v type not dict or list\\{v=}"))
         elif not isinstance(add_file_ext, bool):
             self.log.error(f"add_file_ext type not bool\\{add_file_ext=}")
-            return False
+            return ReturnValue(False, TypeError(f"add_file_ext type not bool\\{add_file_ext=}"))
 
-        v = tomlkit.dumps(v)
+        v = self.interpreter(v, "w", **kwargs)
+        if not v.ok:
+            return v
 
         if add_file_ext:
             filename = f"{filename}.toml"
-        filepath = os.path.join(filepath, filename)
-        file_content = self._fc.dump(v, file_path=filepath, encoding=encoding)
-        if not file_content:
-            return False
-        return True
-
-
+        return self._fc.dump(
+            v.v,
+            file_name=filename,
+            file_path=filepath,
+            encoding=encoding,
+            **kwargs
+        )

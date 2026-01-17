@@ -46,10 +46,12 @@ class Ini(Interpreter):
             if not isinstance(opts, dict):
                 self.log.error(f"section '{sect}' must be dict, got {type(opts)}")
                 raise TypeError(f"section '{sect}' must be dict, got {type(opts)}")
+
             try:
                 cp.add_section(sect)
             except configparser.DuplicateSectionError:
                 self.log.error(f"duplicate section '{sect}'")
+
             for k, val in opts.items():
                 cp.set(sect, str(k), str(val))
 
@@ -79,7 +81,7 @@ class Ini(Interpreter):
             encoding = encoding,
         )
         if not v.ok:
-            return ReturnValue(False)
+            return ReturnValue(False, v)
 
         return self.interpreter(v.v, "r")
 
@@ -92,18 +94,18 @@ class Ini(Interpreter):
             add_file_ext: bool = True,
             *args,
             **kwargs,
-    ) -> bool:
+    ) -> ReturnValue[Any]:
         """嵌套 dict -> ini 文件"""
         if not isinstance(v, dict):
             self.log.error(f"dump need dict, got {type(v)}")
-            return False
+            return ReturnValue(False, TypeError(f"dump need dict, got {type(v)}"))
 
         if add_file_ext and file_name:
             file_name += ".ini"
 
         v = self.interpreter(v, "w")
         if not v.ok:
-            return False
+            return v
 
         return self._fc.dump(
             v.v,

@@ -64,7 +64,7 @@ class Interpreter(FileBaseClass):
         mode = mode.lower()
         if not self._interpreter_check(mode=mode):
             log.error("interpreter check failed")
-            return ReturnValue(False)
+            return ReturnValue(False, ValueError("interpreter check failed"))
 
         try:
             match mode:
@@ -74,12 +74,12 @@ class Interpreter(FileBaseClass):
                     v = self._interpreter_w(v, **kwargs)
                 case _:
                     log.error(f"not mode\\{mode=}")
-                    return ReturnValue(False)
+                    return ReturnValue(False, ValueError(f"not mode\\{mode=}"))
 
             return ReturnValue(True, v)
         except Exception as e:
             self.log.error(f"{e}\\in interpreter")
-            return ReturnValue(False)
+            return ReturnValue(False, e)
 
     def set_interpreter_r(self, _interpreter) -> bool:
         """
