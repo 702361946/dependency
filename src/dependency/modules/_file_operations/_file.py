@@ -159,13 +159,17 @@ class FileBaseClass(File):
                 f"file_path is None\\in path check\\{file_path=}"
             ))
 
+        if os.path.basename(file_name) != file_name:
+            self.log.error(f"Illegal file name\\{file_name=}")
+            return ReturnValue(False, ValueError("Illegal file name"))
+
         join_path = os.path.join(file_path, file_name)
         # if not os.path.isdir(join_path):
         #     self.log.error(f"file_path does not exist\\{file_path=}")
         #     return False
 
         # 补全路径
-        os.makedirs(join_path, exist_ok=True)
+        os.makedirs(file_path, exist_ok=True)
         return ReturnValue(True, join_path)
 
     def load(

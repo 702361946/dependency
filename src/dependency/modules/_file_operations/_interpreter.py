@@ -35,7 +35,7 @@ class Interpreter(FileBaseClass):
         """
         :param mode:mode 有三种值, a:all,r,w, 在all模式下返回值不单独取决于一个,而是有一个False则返回False
         """
-        mode.lower()
+        mode = mode.lower()
         if mode not in ["a", "all", "r", "w"]:
             log.error(f"mode not a, all, r, w\\{mode=}")
             return False
