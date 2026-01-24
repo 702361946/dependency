@@ -3,15 +3,14 @@
 #  702361946@qq.com
 #  https://github.com/702361946
 
-import os
 import unittest
 from pathlib import Path
 
 from src.dependency.modules._file_operations import *
 
 
-class TestCSVInterpreter(unittest.TestCase):
-    """针对 CSV (Interpreter 模式) 的单元测试"""
+class TestCSV(unittest.TestCase):
+    """CSV的单元测试"""
 
     def setUp(self):
         self.path = Path("test/temp_files")
