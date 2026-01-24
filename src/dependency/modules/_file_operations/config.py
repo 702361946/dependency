@@ -17,14 +17,14 @@ log: Log = Log(
     log_output_to_file_path=f"{log_path}file_load.log",
 )
 
-def check_log(_log: Log | Logger) -> bool:
+def check_log(_log: Log | Logger) -> ReturnValue[Exception | None]:
     """
     :param _log:
     """
     if not isinstance(_log, Log) and not isinstance(_log, Logger):
-        raise TypeError("log type not Log or Logger")
+        return ReturnValue(False, TypeError("log type not Log or Logger"))
 
-    return True
+    return ReturnValue(True, None)
 
 T = TypeVar("T")
 
@@ -59,18 +59,23 @@ class ReturnValue(Generic[T]):
         """
         return self.v if self.ok else None
 
+    def __bool__(self) -> bool:
+        return self.ok
+
 
 class BaseClass:
     """
     基础类
     """
     def __init__(self, _log: Log | Logger = log):
-        check_log(_log)
-        self.log: Log = _log
+        if not check_log(_log).ok:
+            self.log: Log = log
+        else:
+            self.log: Log = _log
         self.generation_time = time.time()
 
-    def load(self, file_path: str, *args, **kwargs) -> ReturnValue:
+    def load(self, file_path: str, *args, **kwargs) -> ReturnValue[Any]:
         pass
 
-    def dump(self, v: Any, file_path: str, *args, **kwargs) -> bool:
+    def dump(self, v: Any, file_path: str, *args, **kwargs) -> ReturnValue[Any]:
         pass

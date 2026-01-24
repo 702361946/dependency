@@ -7,12 +7,13 @@
 3. 自定义读写解释器
 
 # 模块结构
-* File:基础文件读写类
-* FileBaseClass:封装路径管理与文件操作的基础类
-* Interpreter:支持自定义读写解释器的基类
+* PathTools: 路径操控
+* File: 基础文件读写类
+* FileBaseClass: 封装路径管理与文件操作的基础类
+* Interpreter: 支持自定义读写解释器的基类
 
 # 注意事项
 * 所有文件操作默认编码为 UTF-8
 * 文件路径支持自动拼接后缀,可通过参数控制
-* 读写失败时返回 False 或 ReturnValue(False),请根据实际情况检查返回值
+* 读写失败时返回 False 或 ReturnValue(False),请根据实际情况检查返回值,原因为部分内容返回RV过于繁琐
 * 当前版本未实现多线程锁,设置解释器时请避免并发操作

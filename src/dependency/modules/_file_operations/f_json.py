@@ -54,13 +54,7 @@ class Json(Interpreter):
             return ReturnValue(False, v)
 
         # analysis
-        try:
-            v = self.interpreter(v.v, "r", **kwargs)
-        except Exception as e:
-            self.log.error(f"{e}\\in json analysis")
-            return ReturnValue(False, e)
-
-        return v
+        return self.interpreter(v.v, "r", **kwargs)
 
     def dump(
             self,
@@ -70,7 +64,7 @@ class Json(Interpreter):
             encoding: str = "UTF-8",
             add_file_ext: bool = True,
             ensure_ascii: bool = False,
-            indent: int | str | None = 4,
+            indent: int = 4,
             **kwargs
     ) -> ReturnValue[Any]:
         """

@@ -37,7 +37,7 @@ class Interpreter(FileBaseClass):
         """
         mode = mode.lower()
         if mode not in ["a", "all", "r", "w"]:
-            log.error(f"mode not a, all, r, w\\{mode=}")
+            self.log.error(f"mode not a, all, r, w\\{mode=}")
             return False
         elif mode == "all":
             mode = "a"
@@ -63,7 +63,7 @@ class Interpreter(FileBaseClass):
         """
         mode = mode.lower()
         if not self._interpreter_check(mode=mode):
-            log.error("interpreter check failed")
+            self.log.error("interpreter check failed")
             return ReturnValue(False, ValueError("interpreter check failed"))
 
         try:
@@ -73,7 +73,7 @@ class Interpreter(FileBaseClass):
                 case "w":
                     v = self._interpreter_w(v, **kwargs)
                 case _:
-                    log.error(f"not mode\\{mode=}")
+                    self.log.error(f"not mode\\{mode=}")
                     return ReturnValue(False, ValueError(f"not mode\\{mode=}"))
 
             return ReturnValue(True, v)

@@ -4,6 +4,7 @@
 #  https://github.com/702361946
 
 from .config import ReturnValue, BaseClass
+from ._path import PathTools
 from ._file import File, FileBaseClass
 from ._interpreter import Interpreter
 from .f_csv import CSV
@@ -17,11 +18,12 @@ __license__ = "MIT"
 __all__ = [
     'BaseClass',
     'ReturnValue',
+    "PathTools",
     'File',
     'FileBaseClass',
     "Interpreter",
-    'Json',
-    'Toml',
     'CSV',
     "Ini",
+    'Json',
+    'Toml',
 ]

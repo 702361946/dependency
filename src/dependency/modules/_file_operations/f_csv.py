@@ -43,8 +43,8 @@ class CSV(Interpreter):
 
         """
         if not isinstance(v, list):
-            self.log.error(f"v type not dict or list\\{v=}")
-            return ReturnValue(False, TypeError(f"v type not dict or list\\{v=}"))
+            self.log.error(f"v type not list\\{v=}")
+            return ReturnValue(False, TypeError(f"v type not list\\{v=}"))
 
         try:
             buffer = io.StringIO()
