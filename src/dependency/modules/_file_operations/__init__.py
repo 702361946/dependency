@@ -3,18 +3,14 @@
 #  702361946@qq.com
 #  https://github.com/702361946
 
-from .config import ReturnValue, BaseClass
+from .config import ReturnValue, BaseClass, log
 from ._path import PathTools
 from ._file import File, FileBaseClass
 from ._interpreter import Interpreter
 from .f_csv import CSV
 from .f_ini import Ini
 from .f_json import Json
-from .f_toml import Toml
 
-__version__ = "0.0.1"
-__author__ = "702361946@qq.com"
-__license__ = "MIT"
 __all__ = [
     'BaseClass',
     'ReturnValue',
@@ -25,5 +21,14 @@ __all__ = [
     'CSV',
     "Ini",
     'Json',
-    'Toml',
 ]
+
+try:
+    from .f_toml import Toml
+    __all__ += ["Toml"]
+except ImportError:
+    log.error("Missing dependency library tomlkit")
+
+__version__ = "0.0.1"
+__author__ = "702361946@qq.com"
+__license__ = "MIT"
