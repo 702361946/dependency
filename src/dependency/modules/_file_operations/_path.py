@@ -2,6 +2,8 @@
 #  @702361946
 #  702361946@qq.com
 #  https://github.com/702361946
+import os.path
+import tempfile
 from pathlib import Path
 
 from .config import *
@@ -70,3 +72,10 @@ class PathTools:
         except Exception as e:
             _log.error(f"{e}\\in PathTools.mkdir")
             return ReturnValue(False, e)
+
+    @staticmethod
+    def get_temp_dir() -> ReturnValue[Path]:
+        """
+        获取临时目录
+        """
+        return PathTools.str_to_path(os.path.abspath(tempfile.mkdtemp()))

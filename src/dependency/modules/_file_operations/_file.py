@@ -2,7 +2,6 @@
 #  @702361946
 #  702361946@qq.com
 #  https://github.com/702361946
-
 from ._path import *
 
 class File(BaseClass):
@@ -137,6 +136,7 @@ class FileBaseClass(File):
             _fc: File = None
     ):
         """
+        所有的path拼接均为{self.file_path}{file_path}{file_name}
         :param file_save_path:
         :param _log:
         :param _fc: 用于加载&写入内容的类,要求有load&dump方法
@@ -150,8 +150,14 @@ class FileBaseClass(File):
 
         fp = PathTools.str_to_path(file_save_path)
         if not fp.ok:
-            fp = PathTools.str_to_path(".").v
-            self.log.warning(f'file_save_path value set Path(".")')
+            temp_dir = PathTools.get_temp_dir()
+            if not temp_dir.ok:
+                temp_dir = "."
+                self.log.error("The temporary directory of the current system cannot be found")
+            else:
+                temp_dir = temp_dir.v
+            fp = PathTools.str_to_path(temp_dir).v
+            self.log.error(f'file_save_path type not str or Path\\set value is Path({temp_dir})')
         else:
             fp = fp.v
 
@@ -172,16 +178,16 @@ class FileBaseClass(File):
         """
         通过检查返回路径, 未通过返回False
         :param file_name:
-        :param file_path: 为None时等价于{self.file_path}
+        :param file_path: 拼接于self.file_path后
         :param mkdir_path: 是否创建目录
         """
-        if file_path is None:
-            file_path = self.file_path
-
-        fp_rv = PathTools.str_to_path(file_path)
-        if not fp_rv.ok:
-            return ReturnValue(False, fp_rv)
-        fp = fp_rv.v
+        fp = PathTools.str_to_path(".").v
+        if file_path is not None:
+            fp_rv = PathTools.str_to_path(file_path)
+            if not fp_rv.ok:
+                return ReturnValue(False, fp_rv)
+            fp = fp_rv.v
+            fp = self.file_path / fp
 
         # file_name 检查
         if not isinstance(file_name, str):
@@ -227,7 +233,6 @@ class FileBaseClass(File):
             **kwargs
     ) -> ReturnValue[str | bytes | Exception]:
         """
-        当{file_path}为None时,将使用{self.file_path}
         """
         file_path = self._path_check(file_name, file_path, mkdir_path)
         if not file_path.ok:
@@ -246,8 +251,7 @@ class FileBaseClass(File):
             **kwargs
     ) -> ReturnValue[Exception | None]:
         """
-        {v}为要写入的值
-        当{file_path}为None时,将使用{self.file_path}
+        {v}为要写入的值=
         """
         file_path = self._path_check(file_name, file_path, mkdir_path)
         if not file_path.ok:
