@@ -187,7 +187,7 @@ class FileBaseClass(File):
             if not fp_rv.ok:
                 return ReturnValue(False, fp_rv)
             fp = fp_rv.v
-            fp = self.file_path / fp
+        fp = self.file_path / fp
 
         # file_name 检查
         if not isinstance(file_name, str):
@@ -251,7 +251,7 @@ class FileBaseClass(File):
             **kwargs
     ) -> ReturnValue[Exception | None]:
         """
-        {v}为要写入的值=
+        {v}为要写入的值
         """
         file_path = self._path_check(file_name, file_path, mkdir_path)
         if not file_path.ok:
