@@ -1,15 +1,12 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 import os.path
 
-from ._get_package import *
+from .config import *
 from PySide6.QtCore import QTranslator
 from PySide6.QtWidgets import QApplication, QWidget
-
-log = Log(
-    log_sign="app",
-    log_output_to_file_path=f"{log_path}pyside6"
-)
 
 
 class App:
@@ -18,11 +15,13 @@ class App:
             language: str = "zh_CN",
             translator: QTranslator | None = None,
             *,
-            log: LogProtocol = log
+            _log: Log = log
     ):
-        self.log = log
+        self.log = _log
 
-        app = QApplication(sys.argv)
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
         self.app = app
 
         self.language = language
@@ -33,7 +32,7 @@ class App:
             self.translator = QTranslator()
 
         if not self.translator.load(f"{os.path.join(os.path.join('.', 'language'), language)}.qm"):
-            log.error("translator load ERROR")
+            self.log.error("translator load ERROR")
         else:
             self.app.installTranslator(self.translator)
 

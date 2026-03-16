@@ -1,5 +1,7 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 from typing import Protocol, Any, Literal
 
 from PySide6.QtCore import QRect, QSize, Qt
@@ -19,7 +21,7 @@ class ComponentProtocol(Protocol):
     def __init__(
             self,
             *,
-            log: Log
+            _log: Log
     ):
         self.component: Any
         self.log: Log
@@ -34,9 +36,9 @@ class ComponentProtocol(Protocol):
 
 # 基类
 class Widget(QWidget):
-    def __init__(self, parent: QWidget | None = None, *, log: Log = log) -> None:
+    def __init__(self, parent: QWidget | None = None, *, _log: Log = log) -> None:
         super().__init__(parent)
-        self.log = log
+        self.log = _log
         self.component = self
 
     def set_geometry(
@@ -288,20 +290,20 @@ class Button(Widget):
             text: str = "",
             icon: QIcon | None = None,
             *,
-            log: Log = log
+            _log: Log = log
     ):
         """
 
         :param parent: 必须给的参,没有必引发ERROR
         :param text:
         :param icon: QIcon类
-        :param log:
+        :param _log:
         """
         if not isinstance(parent, QWidget):
             log.error("parent value type not QWidget")
             raise TypeError("parent value type not QWidget")
         super().__init__(parent)
-        self.log = log
+        self.log = _log
 
         if icon is None:
             self.component = QPushButton(text, parent)
@@ -408,14 +410,14 @@ class Message(Widget):
         text: str = "",
         icon: QIcon | None = None,
         *,
-        log: Log = log,
+        _log: Log = log,
     ) -> None:
         """
         信息展示标签
         :param parent: 父对象
         :param text: 文本
         :param icon: 图标
-        :param log:
+        :param _log:
         """
         super().__init__(parent)
         self.component: QMessageBox = QMessageBox(parent=parent, text=text, icon=icon)

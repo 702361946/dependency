@@ -1,5 +1,7 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 """
 用于QT ui文件加载转化等
 """
@@ -18,7 +20,7 @@ class UiFile:
     def __init__(
             self,
             file_save_path: str = "ui",
-            log: Log = log
+            _log: Log = log
     ):
         """
 
