@@ -1,9 +1,11 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 import sqlite3
 from typing import Any
 
-from _get_package import *
+from ._get_package import *
 
 log = Log(
     log_sign="SQLite",
