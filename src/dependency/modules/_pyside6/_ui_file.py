@@ -5,7 +5,7 @@
 """
 用于QT ui文件加载转化等
 """
-from _get_package import *
+from ._get_package import *
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QWidget

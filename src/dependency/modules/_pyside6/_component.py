@@ -8,7 +8,7 @@ from PySide6.QtCore import QRect, QSize, Qt
 from PySide6.QtGui import QIcon, QCursor, QPixmap, QFont, QPalette, QColor
 from PySide6.QtWidgets import QPushButton, QWidget, QSizePolicy, QLayout, QMessageBox
 
-from _get_package import *
+from ._get_package import *
 
 log = Log(
     log_sign="component",
