@@ -1,8 +1,11 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 from ._window import *
 from ._ui_file import UiFile
 from ._component import ComponentProtocol, Widget, Button
+from ._ui_control_handling import UICH, UICHTextEdit
 
 __all__ = [
     "Window",
@@ -10,5 +13,7 @@ __all__ = [
     "UiFile",
     "ComponentProtocol",
     "Widget",
-    "Button"
+    "Button",
+    "UICH",
+    "UICHTextEdit",
 ]
