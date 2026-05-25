@@ -4,17 +4,21 @@
 #  https://github.com/702361946
 from __future__ import annotations
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeVar, Generic, cast
+
+T = TypeVar("T")
+U = TypeVar("U")      # 用于 map/bind 的输出类型推断
+V = TypeVar("V")      # 用于 unit_ok 的值类型推断
 
 
-class MEH:
+class MEH(Generic[T]):
     """
     monadic error handling class
     """
     def __init__(
             self,
             *,
-            v: Any = None,
+            v: T | None = None,
             ok: bool = True,
             e: Any = None,
     ):
@@ -25,9 +29,9 @@ class MEH:
     @classmethod
     def unit_ok(
             cls,
-            v: Any,
+            v: V,
             **kwargs
-    ) -> MEH:
+    ) -> MEH[V]:
         """
         成功
         :param v:
@@ -41,7 +45,7 @@ class MEH:
             cls,
             e: Any,
             **kwargs
-    ) -> MEH:
+    ) -> MEH[Any]:
         """
         失败
         :param e:
@@ -52,8 +56,8 @@ class MEH:
 
     def bind(
             self,
-            func: Callable[[Any], MEH],
-    ) -> MEH:
+            func: Callable[[T], MEH[U]],
+    ) -> MEH[U]:
         """
 
         :param func:func返回必须为MEH实例
@@ -66,8 +70,8 @@ class MEH:
 
     def map(
             self,
-            func: Callable[[Any], Any],
-    ) -> MEH:
+            func: Callable[[T], U],
+    ) -> MEH[U]:
         """
 
         :param func:
@@ -84,3 +88,87 @@ class MEH:
         if not isinstance(v, MEH):
             return MEH.unit_ok(v)
         raise TypeError('The parameter "func" passed to the map method cannot return an MEH type')
+
+    def map_no_raise(
+            self,
+            func: Callable[[T], U],
+    ) -> MEH[U]:
+        if not self.ok:
+            return self
+
+        try:
+            v = func(self.v)
+        except Exception as e:
+            return MEH.unit_err(e)
+
+        if not isinstance(v, MEH):
+            return v
+        return MEH.unit_ok(v)
+
+    def bind_no_arg_func(
+            self,
+            func: Callable[[], MEH[U]],
+    ) -> MEH[U]:
+        if not self.ok:
+            return self
+
+        return func()
+
+    def map_no_arg_func(
+            self,
+            func: Callable[[], U],
+    ) -> MEH[U]:
+        """
+
+        :param func:
+        :return:
+        """
+        if not self.ok:
+            return self
+
+        try:
+            v = func()
+        except Exception as e:
+            return MEH.unit_err(e)
+
+        if not isinstance(v, MEH):
+            return MEH.unit_ok(v)
+        raise TypeError('The parameter "func" passed to the map method cannot return an MEH type')
+
+    def map_no_raise_no_arg_func(
+            self,
+            func: Callable[[], U],
+    ) -> MEH[U]:
+        """
+
+        :param func:
+        :return:
+        """
+        if not self.ok:
+            return self
+
+        try:
+            v = func()
+        except Exception as e:
+            return MEH.unit_err(e)
+
+        if not isinstance(v, MEH):
+            return MEH.unit_ok(v)
+        return MEH.unit_ok(v)
+
+    def unwrap(self) -> T | Any:
+        """
+        强制解包
+        """
+        return self.v if self.ok else self.e
+
+    def get(self, default: Any = None) -> T | U | None:
+        if self.ok:
+            return self.v
+        return default
+
+    def __call__(self, default: Any = None) -> T | U | None:
+        return self.get(default=default)
+
+    def __bool__(self):
+        return self.ok
