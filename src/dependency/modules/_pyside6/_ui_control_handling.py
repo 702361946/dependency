@@ -2,10 +2,9 @@
 #  @702361946
 #  702361946@qq.com
 #  https://github.com/702361946
-from abc import ABC, abstractmethod
-from typing import Any, TypeVar, Callable
+from typing import Any, Callable, TypeVar
 
-from PySide6.QtCore import QObject, QDate, QTime, QDateTime, Qt
+from PySide6.QtCore import QDate, QTime, QDateTime, Qt
 from PySide6.QtGui import QKeySequence
 from PySide6.QtWidgets import (
     QWidget,
@@ -22,20 +21,43 @@ from PySide6.QtWidgets import (
     QScrollBar
 )
 
+from modules._error_handling import MEH
 from .config import log
 
-QObjectType = TypeVar("QObjectType", bound=QObject)
 QWidgetType = TypeVar("QWidgetType", bound=QWidget)
+R = TypeVar("R")
 
 
 class UICH:
     @classmethod
+    def __get_widget_instance_or_return_widget_instance(
+            cls,
+            *,
+            widget: QWidgetType | None = None,
+            ui: QWidget | None = None,
+            _type: type[QWidgetType] | None = None,
+            name: str = None
+    ) -> MEH[QWidgetType]:
+        if widget is not None:
+            if isinstance(widget, QWidget):
+                return MEH.unit_ok(widget)
+            else:
+                log.warning(f"{cls.__name__}\\__gwiorwi\\widget type not QWidget")
+
+        if ui is None or _type is None or name is None:
+            log.warning(f"{cls.__name__}\\__gwiorwi\\Incomplete parameters, ui or type or name is none")
+            return MEH.unit_err("ui or type or name is None, Please provide all the parameters")
+
+        return cls.get_widget_instance(ui=ui, _type=_type, name=name)
+
+    @classmethod
     def get_widget_instance(
             cls,
+            *,
             ui: QWidget,
-            _type: type[QObjectType],
+            _type: type[QWidgetType],
             name: str
-    ) -> QObjectType | None:
+    ) -> MEH[QWidgetType]:
         """
         获取部件实例
         :param ui:
@@ -44,47 +66,64 @@ class UICH:
         :return:
         """
         _t = ui.findChild(_type, name=name)
-        log.info(f"{cls.__name__}\\get_widget_instance\\type={_type.__name__}&try={'True' if _t else 'False'}&{name=}")
-        return _t
+        if _t is None:
+            log.info(f"{cls.__name__}\\get_widget_instance\\Component not found\\{_type.__name__=}&{name=}")
+            return MEH.unit_err("Component not found")
+
+        log.debug(f"{cls.__name__}\\get_widget_instance\\Component found\\{_t=}")
+        return MEH.unit_ok(_t)
 
     @classmethod
     def safe_widget_call(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-            func: Callable[[QWidgetType], Any],
-            default: Any = None
-    ) -> Any:
-        widget = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if widget is None:
-            log.warning(f"{cls.__name__}\\safe_widget_call\\widget not found\\{name=}")
-            return default
-        return func(widget)
+            *,
+            func: Callable[[QWidgetType], R],
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            _type: type[QWidgetType] = None,
+            name: str = None
+    ) -> MEH[R]:
+        return cls.__get_widget_instance_or_return_widget_instance(
+            ui=ui,
+            _type=_type,
+            name=name,
+            widget=widget
+        ).map_no_raise(func)
 
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> Any: ...
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[Any]:
+        ...
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: Any
-    ) -> bool: ...
+            *,
+            value: Any,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[None]:
+        ...
 
     @classmethod
     def get_tool_tip(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-    ) -> str | None:
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[str]:
         return cls.safe_widget_call(
+            widget=widget,
             ui=ui,
             _type=_type,
             name=name,
@@ -94,1390 +133,1764 @@ class UICH:
     @classmethod
     def set_tool_tip(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-            tool_tip: str
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_tool_tip\\widget not found\\{name=}")
-            return False
-
+            *,
+            tool_tip: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[None]:
         if not isinstance(tool_tip, str):
             log.warning(f"{cls.__name__}\\set_tool_tip\\value type not str\\{type(tool_tip).__name__=}")
-            return False
+            return MEH.unit_err("tool_tip type not str")
 
-        _t.setToolTip(tool_tip)
-        return True
+        return cls.safe_widget_call(
+            func=lambda x: x.setToolTip(tool_tip),
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name
+        )
 
     @classmethod
     def get_status_tip(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-    ) -> str | None:
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_status_tip\\widget not found\\{name=}")
-            return None
-        return _t.statusTip()
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[str]:
+        return cls.safe_widget_call(
+            func=lambda x: x.statusTip(),
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name
+        )
 
     @classmethod
     def set_status_tip(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-            status_tip: str
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_status_tip\\widget not found\\{name=}")
-            return False
+            *,
+            status_tip: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[None]:
+        _t = cls.__get_widget_instance_or_return_widget_instance(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name
+        )
         if not isinstance(status_tip, str):
             log.warning(f"{cls.__name__}\\set_status_tip\\value type not str\\{type(status_tip).__name__=}")
-            return False
+            return MEH.unit_err("status_tip type not str")
 
-        _t.setStatusTip(status_tip)
-        return True
+        return _t.map(lambda x: x.setStatusTip(status_tip))
 
     @classmethod
     def get_whats_this(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str
-    ) -> str | None:
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_whats_this\\widget not found\\{name=}")
-            return None
-        return _t.whatsThis()
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[str]:
+        _t = cls.__get_widget_instance_or_return_widget_instance(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name
+        )
+
+        return _t.map(lambda x: x.whatsThis())
 
     @classmethod
     def set_whats_this(
             cls,
-            ui: QWidget,
-            _type: type[QWidgetType],
-            name: str,
-            whats_this: str
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_whats_this\\widget not found\\{name=}")
-            return False
+            *,
+            whats_this: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QWidgetType] = None,
+    ) -> MEH[None]:
+        _t = cls.__get_widget_instance_or_return_widget_instance(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name
+        )
         if not isinstance(whats_this, str):
             log.warning(f"{cls.__name__}\\set_whats_this\\value type not str\\{type(whats_this).__name__=}")
-            return False
+            return MEH.unit_err("whats_this type not str")
 
-        _t.setWhatsThis(whats_this)
-        return True
+        return _t.map(lambda x: x.setWhatsThis(whats_this))
 
 
-class UICHValue(UICH, ABC):
+class UICHValue(UICH):
     @classmethod
-    @abstractmethod
+    def get_value(
+            cls,
+            *,
+            widget: (
+                    QSpinBox |
+                    QDoubleSpinBox |
+                    QSlider |
+                    QScrollBar |
+                    QDial
+            ) = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: (
+                    type[QSpinBox] |
+                    type[QDoubleSpinBox] |
+                    type[QSlider] |
+                    type[QScrollBar] |
+                    type[QDial]
+            ) = None,
+    ) -> MEH[int | float]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=_type,
+            func=lambda x: x.value()
+        )
+
+    @classmethod
     def get_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | float | None: ...
+            *,
+            widget: (
+                    QSpinBox |
+                    QDoubleSpinBox |
+                    QDial |
+                    QSlider |
+                    QScrollBar
+            ) = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: (
+                    type[QSpinBox] |
+                    type[QDoubleSpinBox] |
+                    type[QDial] |
+                    type[QSlider] |
+                    type[QScrollBar]
+            ) = None,
+    ) -> MEH[int | float]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name,
+            func=lambda x: x.maximum(),
+        )
 
     @classmethod
-    @abstractmethod
     def set_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int | float
-    ) -> bool: ...
+            *,
+            value: int | float,
+            widget: (
+                    QSpinBox |
+                    QDoubleSpinBox |
+                    QDial |
+                    QSlider |
+                    QScrollBar
+            ) = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: (
+                    type[QSpinBox] |
+                    type[QDoubleSpinBox] |
+                    type[QDial] |
+                    type[QSlider] |
+                    type[QScrollBar]
+            ) = None,
+    ) -> MEH[None]:
+        if not isinstance(value, (int, float)):
+            log.warning(f"{cls.__name__}\\set_maximum\\value type not int or float\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int or float")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name,
+            func=lambda x: x.setMaximum(value)
+        )
 
     @classmethod
-    @abstractmethod
     def get_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | float | None: ...
+            *,
+            widget: (
+                    QSpinBox |
+                    QDoubleSpinBox |
+                    QDial |
+                    QSlider |
+                    QScrollBar
+            ) = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: (
+                    type[QSpinBox] |
+                    type[QDoubleSpinBox] |
+                    type[QDial] |
+                    type[QSlider] |
+                    type[QScrollBar]
+            ) = None,
+    ) -> MEH[int | float]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name,
+            func=lambda x: x.minimum(),
+        )
 
     @classmethod
-    @abstractmethod
     def set_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int | float
-    ) -> bool: ...
+            *,
+            value: int | float,
+            widget: (
+                    QSpinBox |
+                    QDoubleSpinBox |
+                    QDial |
+                    QSlider |
+                    QScrollBar
+            ) = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: (
+                    type[QSpinBox] |
+                    type[QDoubleSpinBox] |
+                    type[QDial] |
+                    type[QSlider] |
+                    type[QScrollBar]
+            ) = None,
+    ) -> MEH[None]:
+        if not isinstance(value, (int, float)):
+            log.warning(f"{cls.__name__}\\set_minimum\\value type not int or float\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int or float")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=_type,
+            name=name,
+            func=lambda x: x.setMinimum(value)
+        )
 
 
 class UICHDateTimeEdit(UICH):
     @classmethod
+    def __type_issubclass_datetime(
+            cls,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None
+    ) -> type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] | None:
+        if _type is None:
+            return None
+
+        try:
+            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
+                log.warning(f"{cls.__name__}\\__type_issubclass\\{_type} is not a supported type")
+                return None
+        except TypeError as e:
+            log.error(f"{cls.__name__}\\__type_issubclass\\{e}")
+            return None
+
+        return _type
+
+    @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> Any:
-        return cls.get_datetime(ui=ui, _type=QDateTimeEdit, name=name)
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[QDateTime]:
+        return cls.get_datetime(
+            widget=widget,
+            ui=ui,
+            _type=QDateTimeEdit,
+            name=name
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: QDateTime
-    ) -> bool:
-        return cls.set_datetime(ui=ui, _type=QDateTimeEdit, name=name, datetime=value)
+            *,
+            datetime: QDateTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs,
+    ) -> MEH[None]:
+        return cls.set_datetime(
+            datetime=datetime,
+            widget=widget,
+            ui=ui,
+            _type=QDateTimeEdit,
+            name=name,
+        )
 
     @classmethod
     def get_date(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit]
-    ) -> QDate | None:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\get_date\\{_type} is not a supported type")
-                return None
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\get_date\\{e}")
-            return None
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_date\\widget not found\\{name=}")
-            return None
-
-        t = _t.date()
-        log.debug(f"{cls.__name__}\\get_date\\value={t}")
-        return t
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[QDate]:
+        return cls.safe_widget_call(
+            func=lambda x: x.date(),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
     @classmethod
     def set_date(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit],
-            date: QDate
-    ) -> bool:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\set_date\\{_type} is not a supported type")
-                return False
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\set_date\\{e}")
-            return False
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_date\\widget not found\\{name=}")
-            return False
+            *,
+            date: QDate,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[None]:
         if not isinstance(date, QDate):
             log.warning(f"{cls.__name__}\\set_date\\value type not QDate\\{type(date).__name__=}")
-            return False
+            return MEH.unit_err("date type not QDate")
 
-        _t.setDate(date)
-        log.debug(f"{cls.__name__}\\set_date\\value={date}")
-        return True
+        return cls.safe_widget_call(
+            func=lambda x: x.setDate(date),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
     @classmethod
     def get_time(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit],
-    ) -> QTime | None:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\get_time\\{_type} is not a supported type")
-                return None
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\get_time\\{e}")
-            return None
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_time\\widget not found\\{name=}")
-            return None
-
-        t = _t.time()
-        log.debug(f"{cls.__name__}\\get_time\\value={t}")
-        return t
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[QTime]:
+        return cls.safe_widget_call(
+            func=lambda x: x.time(),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
     @classmethod
     def set_time(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit],
-            time: QTime | None
-    ) -> bool:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\set_time\\{_type} is not a supported type")
-                return False
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\set_time\\{e}")
-            return False
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_time\\widget not found\\{name=}")
-            return False
+            *,
+            time: QTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[None]:
         if not isinstance(time, QTime):
             log.warning(f"{cls.__name__}\\set_time\\value type not QTime\\{type(time).__name__=}")
-            return False
+            return MEH.unit_err("time type not QTime")
 
-        _t.setTime(time)
-        log.debug(f"{cls.__name__}\\set_time\\value={time}")
-        return True
+        return cls.safe_widget_call(
+            func=lambda x: x.setTime(time),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
     @classmethod
     def get_datetime(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit],
-    ) -> QDateTime | None:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\get_datetime\\{_type} is not a supported type")
-                return None
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\get_datetime\\{e}")
-            return None
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_datetime\\widget not found\\{name=}")
-            return None
-
-        t = _t.dateTime()
-        log.debug(f"{cls.__name__}\\get_datetime\\value={t}")
-        return t
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[QDateTime]:
+        return cls.safe_widget_call(
+            func=lambda x: x.dateTime(),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
     @classmethod
     def set_datetime(
             cls,
-            ui: QWidget,
-            name: str,
-            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit],
-            datetime: QDateTime
-    ) -> bool:
-        try:
-            if not issubclass(_type, (QDateTimeEdit, QDateEdit, QTimeEdit)):
-                log.warning(f"{cls.__name__}\\set_datetime\\{_type} is not a supported type")
-                return False
-        except TypeError as e:
-            log.error(f"{cls.__name__}\\set_datetime\\{e}")
-            return False
-
-        _t = cls.get_widget_instance(ui=ui, _type=_type, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_datetime\\widget not found\\{name=}")
-            return False
+            *,
+            datetime: QDateTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            _type: type[QDateTimeEdit] | type[QDateEdit] | type[QTimeEdit] = None,
+    ) -> MEH[None]:
         if not isinstance(datetime, QDateTime):
             log.warning(f"{cls.__name__}\\set_datetime\\value type not QDateTime\\{type(datetime).__name__=}")
-            return False
+            return MEH.unit_err("datetime type not QDateTime")
 
-        _t.setDateTime(datetime)
-        log.debug(f"{cls.__name__}\\set_datetime\\value={datetime}")
-        return True
+        return cls.safe_widget_call(
+            func=lambda x: x.setDateTime(datetime),
+            widget=widget,
+            ui=ui,
+            _type=cls.__type_issubclass_datetime(_type),
+            name=name
+        )
 
 
 class UICHDateEdit(UICHDateTimeEdit):
     @classmethod
+    def get_value(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[QDate]:
+        return cls.get_date(
+            widget=widget,
+            ui=ui,
+            name=name
+        )
+
+    @classmethod
+    def set_value(
+            cls,
+            *,
+            date: QDate,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs,
+    ) -> MEH[None]:
+        return cls.set_date(
+            date=date,
+            widget=widget,
+            ui=ui,
+            name=name,
+        )
+
+    @classmethod
     def get_date(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QDate | None:
-        return super().get_date(ui=ui, name=name, _type=QDateEdit)
+    ) -> MEH[QDate]:
+        return super().get_date(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDateEdit
+        )
 
     @classmethod
     def set_date(
             cls,
-            ui: QWidget,
-            name: str,
+            *,
             date: QDate,
-            *args,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
-        return super().set_date(ui=ui, name=name, date=date, _type=QDateEdit)
+    ) -> MEH[None]:
+        return super().set_date(
+            date=date,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDateEdit
+        )
 
     @classmethod
     def get_time(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QTime | None:
+    ) -> MEH[QTime]:
         log.warning(f"{cls.__name__}\\get_time\\QDateEdit generally does not handle this content")
-        return super().get_time(ui=ui, name=name, _type=QDateEdit)
+        return super().get_time(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDateEdit
+        )
 
     @classmethod
     def set_time(
             cls,
-            ui: QWidget,
-            name: str,
-            time: QTime | None,
-            *args,
+            *,
+            time: QTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
+    ) -> MEH[None]:
         log.warning(f"{cls.__name__}\\set_time\\QDateEdit does not handle this content")
-        return super().set_time(ui=ui, name=name, time=time, _type=QDateEdit)
+        return super().set_time(
+            widget=widget,
+            ui=ui,
+            name=name,
+            time=time,
+            _type=QDateEdit
+        )
 
     @classmethod
     def get_datetime(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QDateTime | None:
+    ) -> MEH[QDateTime]:
         log.warning(f"{cls.__name__}\\get_datetime\\QDateEdit does not handle this content")
-        return super().get_datetime(ui=ui, name=name, _type=QDateEdit)
+        return super().get_datetime(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDateEdit
+        )
 
     @classmethod
     def set_datetime(
             cls,
-            ui: QWidget,
-            name: str,
+            *,
             datetime: QDateTime,
-            *args,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
+    ) -> MEH[None]:
         log.warning(f"{cls.__name__}\\set_datetime\\QDateEdit does not handle this content")
-        return super().set_datetime(ui=ui, name=name, datetime=datetime, _type=QDateEdit)
+        return super().set_datetime(
+            widget=widget,
+            ui=ui,
+            name=name,
+            datetime=datetime,
+            _type=QDateEdit
+        )
 
 
 class UICHTimeEdit(UICHDateTimeEdit):
     @classmethod
+    def get_value(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[QTime]:
+        return cls.get_time(
+            widget=widget,
+            ui=ui,
+            name=name
+        )
+
+    @classmethod
+    def set_value(
+            cls,
+            *,
+            time: QTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs,
+    ) -> MEH[None]:
+        return cls.set_time(
+            time=time,
+            widget=widget,
+            ui=ui,
+            name=name,
+        )
+
+    @classmethod
     def get_date(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QDate | None:
+    ) -> MEH[QDate]:
         log.warning(f"{cls.__name__}\\get_date\\QTimeEdit does not handle this content")
-        return super().get_date(ui=ui, name=name, _type=QTimeEdit)
+        return super().get_date(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTimeEdit
+        )
 
     @classmethod
     def set_date(
             cls,
-            ui: QWidget,
-            name: str,
+            *,
             date: QDate,
-            *args,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
+    ) -> MEH[None]:
         log.warning(f"{cls.__name__}\\set_date\\QTimeEdit does not handle this content")
-        return super().set_date(ui=ui, name=name, date=date, _type=QTimeEdit)
+        return super().set_date(
+            widget=widget,
+            ui=ui,
+            name=name,
+            date=date,
+            _type=QTimeEdit
+        )
 
     @classmethod
     def get_time(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QTime | None:
-        return super().get_time(ui=ui, name=name, _type=QTimeEdit)
+    ) -> MEH[QTime]:
+        return super().get_time(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTimeEdit
+        )
 
     @classmethod
     def set_time(
             cls,
-            ui: QWidget,
-            name: str,
-            time: QTime | None,
-            *args,
+            *,
+            time: QTime,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
-        return super().set_time(ui=ui, name=name, time=time, _type=QTimeEdit)
+    ) -> MEH[None]:
+        return super().set_time(
+            widget=widget,
+            ui=ui,
+            name=name,
+            time=time,
+            _type=QTimeEdit
+        )
 
     @classmethod
     def get_datetime(
             cls,
-            ui: QWidget,
-            name: str,
-            *args,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> QDateTime | None:
+    ) -> MEH[QDateTime]:
         log.warning(f"{cls.__name__}\\get_datetime\\QTimeEdit does not handle this content")
-        return super().get_datetime(ui=ui, name=name, _type=QTimeEdit)
+        return super().get_datetime(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTimeEdit
+        )
 
     @classmethod
     def set_datetime(
             cls,
-            ui: QWidget,
-            name: str,
+            *,
             datetime: QDateTime,
-            *args,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
             **kwargs
-    ) -> bool:
+    ) -> MEH[None]:
         log.warning(f"{cls.__name__}\\set_datetime\\QTimeEdit does not handle this content")
-        return super().set_datetime(ui=ui, name=name, datetime=datetime, _type=QTimeEdit)
+        return super().set_datetime(
+            widget=widget,
+            ui=ui,
+            name=name,
+            datetime=datetime,
+            _type=QTimeEdit
+        )
 
 
 class UICHLineEdit(UICH):
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> Any:
-        _t = cls.get_widget_instance(ui=ui, _type=QLineEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_value\\widget not found\\{name=}")
-            return None
-        t = _t.text()
-        log.debug(f"{cls.__name__}\\get_value\\value={t}")
-        return t
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[str]:
+        return cls.get_text(
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: str | None
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QLineEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_value\\widget not found\\{name=}")
-            return False
+            *,
+            text: str | None = None,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
+        return cls.set_text(
+            text=text,
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
-        if not isinstance(value, str) and value is not None:
-            log.warning(f"{cls.__name__}\\set_value\\value type not str\\{type(value).__name__=}")
-            return False
+    @classmethod
+    def get_text(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[str]:
+        return cls.safe_widget_call(
+            func=lambda x: x.text(),
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QLineEdit
+        )
 
-        _t.setText(value)
-        log.debug(f"{cls.__name__}\\set_value\\value={value}")
-        return True
+    @classmethod
+    def set_text(
+            cls,
+            *,
+            text: str | None = None,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if text is None:
+            text = ""
+        elif not isinstance(text, str):
+            log.warning(f"{cls.__name__}\\set_text\\text type not str\\{type(text).__name__=}")
+            return MEH.unit_err("text type not str")
+
+        return cls.safe_widget_call(
+            func=lambda x: x.setText(text),
+            widget=widget,
+            ui=ui,
+            _type=QLineEdit,
+            name=name
+        )
 
 
 class UICHTextEdit(UICH):
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> str | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QTextEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_value\\widget not found\\{name=}")
-            return None
-        t = _t.toPlainText()
-        log.debug(f"{cls.__name__}\\get_value\\value={t}")
-        return t
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[str]:
+        return cls.get_text(
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: str
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QTextEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_value\\widget not found\\{name=}")
-            return False
+            *,
+            value: str | None = None,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
+        return cls.set_text(
+            text=value,
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
-        if not isinstance(value, str):
-            log.warning(f"{cls.__name__}\\set_value\\value type not str\\{type(value).__name__=}")
-            return False
+    @classmethod
+    def get_html(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[str]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.toHtml()
+        )
 
-        _t.setText(value)
-        log.debug(f"{cls.__name__}\\set_value\\value={value}")
-        return True
+    @classmethod
+    def set_html(
+            cls,
+            *,
+            html: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(html, str):
+            log.warning(f"{cls.__name__}\\set_html\\html type not str\\{type(html).__name__=}")
+            return MEH.unit_err("html type not str")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.setHtml(html)
+        )
+
+    @classmethod
+    def get_markdown(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[str]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.toMarkdown()
+        )
+
+    @classmethod
+    def set_markdown(
+            cls,
+            *,
+            markdown: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(markdown, str):
+            log.warning(f"{cls.__name__}\\set_html\\html type not str\\{type(markdown).__name__=}")
+            return MEH.unit_err("html type not str")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.setMarkdown(markdown)
+        )
+
+    @classmethod
+    def get_text(
+            cls,
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[str]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.toPlainText()
+        )
+
+    @classmethod
+    def set_text(
+            cls,
+            *,
+            text: str,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(text, str):
+            log.warning(f"{cls.__name__}\\set_text\\text type not str\\{type(text).__name__=}")
+            return MEH.unit_err("text type not str")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QTextEdit,
+            func=lambda x: x.setText(text)
+        )
 
 
 class UICHSpinBox(UICHValue):
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_value\\widget not found\\{name=}")
-            return None
-
-        t = _t.value()
-        log.debug(f"{cls.__name__}\\get_value\\value={t}")
-        return t
+            *,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[int]:
+        return super().get_value(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox,
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_value\\widget not found\\{name=}")
-            return False
+            *,
+            value: int,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
         if not isinstance(value, int):
             log.warning(f"{cls.__name__}\\set_value\\value type not int\\{type(value).__name__=}")
-            return False
+            return MEH.unit_err("value type not int")
 
-        _t.setValue(value)
-        log.debug(f"{cls.__name__}\\set_value\\value={value}")
-        return True
+        return super().set_value(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox,
+        )
 
     @classmethod
     def get_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum\\widget not found\\{name=}")
-            return None
-
-        t = _t.maximum()
-        log.debug(f"{cls.__name__}\\get_maximum\\value={t}")
-        return t
+            *,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[int]:
+        return super().get_maximum(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox
+        )
 
     @classmethod
     def set_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum\\widget not found\\{name=}")
-            return False
+            *,
+            value: int,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
         if not isinstance(value, int):
             log.warning(f"{cls.__name__}\\set_maximum\\value type not int\\{type(value).__name__=}")
-            return False
+            return MEH.unit_err("value type not int")
 
-        _t.setMaximum(value)
-        log.debug(f"{cls.__name__}\\set_maximum\\value={value}")
-        return True
+        return super().set_maximum(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox
+        )
 
     @classmethod
     def get_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_minimum\\widget not found\\{name=}")
-            return None
-
-        t = _t.minimum()
-        log.debug(f"{cls.__name__}\\get_minimum\\value={t}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[int]:
+        return super().get_minimum(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox
+        )
 
     @classmethod
     def set_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_minimum\\widget not found\\{name=}")
-            return False
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
         if not isinstance(value, int):
             log.warning(f"{cls.__name__}\\set_minimum\\value type not int\\{type(value).__name__=}")
-            return False
+            return MEH.unit_err("value type not int")
 
-        _t.setMinimum(value)
-        log.debug(f"{cls.__name__}\\set_minimum\\value={value}")
-        return True
+        return super().set_minimum(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSpinBox
+        )
 
 
 class UICHDoubleSpinBox(UICHValue):
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> float | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_value\\widget not found\\{name=}")
-            return None
-
-        t = _t.value()
-        log.debug(f"{cls.__name__}\\get_value\\value={t}")
-        return t
+            *,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[float]:
+        return super().get_value(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox,
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: float
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_value\\widget not found\\{name=}")
-            return False
+            *,
+            value: float,
+            widget=None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
         if not isinstance(value, float):
             log.warning(f"{cls.__name__}\\set_value\\value type not float\\{type(value).__name__=}")
-            return False
+            return MEH.unit_err("value type not float")
 
-        _t.setValue(value)
-        log.debug(f"{cls.__name__}\\set_value\\value={value}")
-        return True
+        return super().set_value(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox,
+        )
 
     @classmethod
     def get_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> float | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum\\widget not found\\{name=}")
-            return None
-
-        t = _t.maximum()
-        log.debug(f"{cls.__name__}\\get_maximum\\value={t}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[float]:
+        return super().get_maximum(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox
+        )
 
     @classmethod
     def set_maximum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: float
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, float):
-            log.warning(f"{cls.__name__}\\set_maximum\\value type not float\\{type(value).__name__=}")
-            return False
-
-        _t.setMaximum(value)
-        log.debug(f"{cls.__name__}\\set_maximum\\value={value}")
-        return True
+            *,
+            value: float,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
+        return super().set_maximum(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox
+        )
 
     @classmethod
     def get_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> float | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_minimum\\widget not found\\{name=}")
-            return None
-
-        t = _t.minimum()
-        log.debug(f"{cls.__name__}\\get_minimum\\value={t}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[float]:
+        return super().get_minimum(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox
+        )
 
     @classmethod
     def set_minimum(
             cls,
-            ui: QWidget,
-            name: str,
-            value: float
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDoubleSpinBox, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_minimum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, float):
-            log.warning(f"{cls.__name__}\\set_minimum\\value type not float\\{type(value).__name__=}")
-            return False
-
-        _t.setMinimum(value)
-        log.debug(f"{cls.__name__}\\set_minimum\\value={value}")
-        return True
+            *,
+            value: float,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
+        return super().set_minimum(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDoubleSpinBox
+        )
 
 
 class UICHQDial(UICHValue):
     @classmethod
-    def get_value(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_value\\widget not found\\{name=}")
-            return None
-        t = _t.value()
-        log.debug(f"{cls.__name__}\\get_value\\value={t}")
-        return t
+    def get_notches_visible(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[bool]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDial,
+            func=lambda x: x.notchesVisible()
+        )
 
     @classmethod
-    def set_value(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_value\\widget not found\\{name=}")
-            return False
+    def set_notches_visible(
+            cls,
+            *,
+            value: bool,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, bool):
+            log.warning(f"{cls.__name__}\\set_notches_visible\\value type not bool\\{type(value).__name__=}")
+            return MEH.unit_err("value type not bool")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDial,
+            func=lambda x: x.setNotchesVisible(value)
+        )
+
+    @classmethod
+    def get_wrapping(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[bool]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=QDial,
+            name=name,
+            func=lambda x: x.wrapping()
+        )
+
+    @classmethod
+    def set_wrapping(
+            cls,
+            *,
+            value: bool,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, bool):
+            log.warning(f"{cls.__name__}\\set_wrapping\\value type not bool\\{type(value).__name__=}")
+            return MEH.unit_err("value type not bool")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            _type=QDial,
+            name=name,
+            func=lambda x: x.setWrapping(value)
+        )
+
+    @classmethod
+    def get_notch_target(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[float]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDial,
+            func=lambda x: x.notchTarget()
+        )
+
+    @classmethod
+    def set_notch_target(
+            cls,
+            *,
+            value: float,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, (int, float)):
+            log.warning(f"{cls.__name__}\\set_notch_target\\value type not float\\{type(value).__name__=}")
+            return MEH.unit_err("value type not float")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QDial,
+            func=lambda x: x.setNotchTarget(value)
+        )
+
+
+class UICHQSlider(UICHValue):
+    @classmethod
+    def get_orientation(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[Qt.Orientation]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x: x.orientation()
+        )
+
+    @classmethod
+    def set_orientation(
+            cls,
+            *,
+            value: Qt.Orientation,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, Qt.Orientation):
+            log.warning(f"{cls.__name__}\\set_orientation\\value type not Qt.Orientation\\{type(value).__name__=}")
+            return MEH.unit_err("value type not Qt.Orientation")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x: x.setOrientation(value)
+        )
+
+    @classmethod
+    def get_single_step(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x: x.singleStep()
+        )
+
+    @classmethod
+    def set_single_step(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
         if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_value\\value type not int\\{type(value).__name__=}")
-            return False
-        _t.setValue(value)
-        log.debug(f"{cls.__name__}\\set_value\\value={value}")
-        return True
+            log.warning(f"{cls.__name__}\\set_single_step\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x: x.setSingleStep(value)
+        )
 
     @classmethod
-    def get_maximum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum\\widget not found\\{name=}")
-            return None
-        t = _t.maximum()
-        log.debug(f"{cls.__name__}\\get_maximum\\value={t}")
-        return t
+    def get_page_step(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.pageStep()
+        )
 
     @classmethod
-    def set_maximum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum\\widget not found\\{name=}")
-            return False
+    def set_page_step(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None
+    ) -> MEH[None]:
         if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_maximum\\value type not int\\{type(value).__name__=}")
-            return False
-        _t.setMaximum(value)
-        log.debug(f"{cls.__name__}\\set_maximum\\value={value}")
-        return True
+            log.warning(f"{cls.__name__}\\set_page_step\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setPageStep(value)
+        )
 
     @classmethod
-    def get_minimum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_minimum\\widget not found\\{name=}")
-            return None
-        t = _t.minimum()
-        log.debug(f"{cls.__name__}\\get_minimum\\value={t}")
-        return t
+    def get_tick_interval(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.tickInterval()
+        )
 
     @classmethod
-    def set_minimum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_minimum\\widget not found\\{name=}")
-            return False
+    def set_tick_interval(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None
+    ) -> MEH[None]:
         if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_minimum\\value type not int\\{type(value).__name__=}")
-            return False
-        _t.setMinimum(value)
-        log.debug(f"{cls.__name__}\\set_minimum\\value={value}")
-        return True
+            log.warning(f"{cls.__name__}\\set_tick_interval\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x: x.setTickInterval(value)
+        )
 
     @classmethod
-    def get_notches_visible(cls, ui: QWidget, name: str) -> bool | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_notches_visible\\widget not found\\{name=}")
-            return None
-        t = _t.notchesVisible()
-        log.debug(f"{cls.__name__}\\get_notches_visible\\value={t}")
-        return t
+    def get_tick_position(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[QSlider.TickPosition]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.tickPosition()
+        )
 
     @classmethod
-    def set_notches_visible(cls, ui: QWidget, name: str, visible: bool) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_notches_visible\\widget not found\\{name=}")
-            return False
-        if not isinstance(visible, bool):
-            log.warning(f"{cls.__name__}\\set_notches_visible\\value type not bool\\{type(visible).__name__=}")
-            return False
-        _t.setNotchesVisible(visible)
-        log.debug(f"{cls.__name__}\\set_notches_visible\\value={visible}")
-        return True
+    def set_tick_position(
+            cls,
+            *,
+            value: QSlider.TickPosition,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, QSlider.TickPosition):
+            log.warning(
+                f"{cls.__name__}\\set_tick_position\\value type not QSlider.TickPosition\\{type(value).__name__=}")
+            return MEH.unit_err("value type not QSlider.TickPosition")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setTickPosition(value)
+        )
+
+
+class UICHQScrollBar(UICHValue):
+    @classmethod
+    def get_single_step(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.singleStep()
+        )
 
     @classmethod
-    def get_wrapping(cls, ui: QWidget, name: str) -> bool | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_wrapping\\widget not found\\{name=}")
-            return None
-        t = _t.wrapping()
-        log.debug(f"{cls.__name__}\\get_wrapping\\value={t}")
-        return t
+    def set_single_step(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, int):
+            log.warning(f"{cls.__name__}\\set_single_step\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setSingleStep(value)
+        )
 
     @classmethod
-    def set_wrapping(cls, ui: QWidget, name: str, wrapping: bool) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_wrapping\\widget not found\\{name=}")
-            return False
-        if not isinstance(wrapping, bool):
-            log.warning(f"{cls.__name__}\\set_wrapping\\value type not bool\\{type(wrapping).__name__=}")
-            return False
-        _t.setWrapping(wrapping)
-        log.debug(f"{cls.__name__}\\set_wrapping\\value={wrapping}")
-        return True
+    def get_page_step(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.pageStep()
+        )
 
     @classmethod
-    def get_notch_target(cls, ui: QWidget, name: str) -> float | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_notch_target\\widget not found\\{name=}")
-            return None
-        t = _t.notchTarget()
-        log.debug(f"{cls.__name__}\\get_notch_target\\value={t}")
-        return t
+    def set_page_step(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, int):
+            log.warning(f"{cls.__name__}\\set_page_step\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setPageStep(value)
+        )
 
     @classmethod
-    def set_notch_target(cls, ui: QWidget, name: str, target: float) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QDial, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_notch_target\\widget not found\\{name=}")
-            return False
-        if not isinstance(target, (int, float)):
-            log.warning(f"{cls.__name__}\\set_notch_target\\value type not float\\{type(target).__name__=}")
-            return False
-        _t.setNotchTarget(float(target))
-        log.debug(f"{cls.__name__}\\set_notch_target\\value={target}")
-        return True
+    def get_orientation(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[Qt.Orientation]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.orientation()
+        )
+
+    @classmethod
+    def set_orientation(
+            cls,
+            *,
+            value: Qt.Orientation,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, Qt.Orientation):
+            log.warning(f"{cls.__name__}\\set_orientation\\value type not Qt.Orientation\\{type(value).__name__=}")
+            return MEH.unit_err("value type not Qt.Orientation")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setOrientation(value)
+        )
+
+    @classmethod
+    def get_slider_position(
+            cls,
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.sliderPosition()
+        )
+
+    @classmethod
+    def set_slider_position(
+            cls,
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, int):
+            log.warning(f"{cls.__name__}\\set_slider_position\\value type not int\\{type(value).__name__=}")
+            return MEH.unit_err("value type not int")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QSlider,
+            func=lambda x:x.setSliderPosition(value)
+        )
 
 
 class UICHQKeySequenceEdit(UICH):
     @classmethod
     def get_value(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> QKeySequence | None:
-        return cls.get_key_sequence(ui=ui, name=name)
+            *,
+            widget: QWidgetType = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[Any]:
+        return cls.get_key_sequence(
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
     @classmethod
     def set_value(
             cls,
-            ui: QWidget,
-            name: str,
-            value: QKeySequence | None
-    ) -> bool:
-        if value is None:
-            return cls.clear(ui=ui, name=name)
-        return cls.set_key_sequence(ui=ui, name=name, key_sequence=value)
+            *,
+            value: QKeySequence | None = None,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+            **kwargs
+    ) -> MEH[None]:
+        return cls.set_key_sequence(
+            value=value,
+            widget=widget,
+            ui=ui,
+            name=name
+        )
 
     @classmethod
     def get_key_sequence(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> QKeySequence | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_key_sequence\\widget not found\\{name=}")
-            return None
-
-        t = _t.keySequence()
-        if t.isEmpty():
-            log.debug(f"{cls.__name__}\\get_key_sequence\\value is empty")
-            return None
-
-        log.debug(f"{cls.__name__}\\get_key_sequence\\value={t.toString()}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[QKeySequence]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.keySequence()
+        )
 
     @classmethod
     def set_key_sequence(
             cls,
-            ui: QWidget,
-            name: str,
-            key_sequence: QKeySequence
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_key_sequence\\widget not found\\{name=}")
-            return False
+            *,
+            value: QKeySequence | None = None,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if value is None:
+            return cls.clear(widget=widget, ui=ui, name=name)
+        elif not isinstance(value, QKeySequence):
+            log.warning(f"{cls.__name__}\\set_key_sequence\\value type not QKeySequence\\{type(value).__name__=}")
+            return MEH.unit_err("value type not QKeySequence")
 
-        if not isinstance(key_sequence, QKeySequence):
-            log.warning(f"{cls.__name__}\\set_key_sequence\\value type not QKeySequence\\{type(key_sequence).__name__=}")
-            return False
-
-        _t.setKeySequence(key_sequence)
-        log.debug(f"{cls.__name__}\\set_key_sequence\\value={key_sequence.toString()}")
-        return True
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.setKeySequence(value)
+        )
 
     @classmethod
     def clear(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\clear\\widget not found\\{name=}")
-            return False
-
-        _t.clear()
-        log.debug(f"{cls.__name__}\\clear\\{name=}")
-        return True
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.clear()
+        )
 
     @classmethod
     def get_maximum_sequence_length(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum_sequence_length\\widget not found\\{name=}")
-            return None
-
-        t = _t.maximumSequenceLength()
-        log.debug(f"{cls.__name__}\\get_maximum_sequence_length\\value={t}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[int]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.maximumSequenceLength()
+        )
 
     @classmethod
     def set_maximum_sequence_length(
             cls,
-            ui: QWidget,
-            name: str,
-            value: int
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum_sequence_length\\widget not found\\{name=}")
-            return False
+            *,
+            value: int,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
         if not isinstance(value, int):
             log.warning(f"{cls.__name__}\\set_maximum_sequence_length\\value type not int\\{type(value).__name__=}")
-            return False
+            return MEH.unit_err("value type not int")
 
-        _t.setMaximumSequenceLength(value)
-        log.debug(f"{cls.__name__}\\set_maximum_sequence_length\\value={value}")
-        return True
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.setMaximumSequenceLength(value)
+        )
 
     @classmethod
     def is_clear_button_enabled(
             cls,
-            ui: QWidget,
-            name: str,
-    ) -> bool | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\is_clear_button_enabled\\widget not found\\{name=}")
-            return None
-
-        t = _t.isClearButtonEnabled()
-        log.debug(f"{cls.__name__}\\is_clear_button_enabled\\value={t}")
-        return t
+            *,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[bool]:
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.isClearButtonEnabled()
+        )
 
     @classmethod
     def set_clear_button_enabled(
             cls,
-            ui: QWidget,
-            name: str,
-            enabled: bool
-    ) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QKeySequenceEdit, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_clear_button_enabled\\widget not found\\{name=}")
-            return False
-        if not isinstance(enabled, bool):
-            log.warning(f"{cls.__name__}\\set_clear_button_enabled\\value type not bool\\{type(enabled).__name__=}")
-            return False
-
-        _t.setClearButtonEnabled(enabled)
-        log.debug(f"{cls.__name__}\\set_clear_button_enabled\\value={enabled}")
-        return True
-
-
-class UICHQSlider(UICHValue):
-    @classmethod
-    def get_value(cls, ui: QWidget, name: str) -> int | None:
-        return cls.get_slider_value(ui=ui, name=name)
-
-    @classmethod
-    def set_value(cls, ui: QWidget, name: str, value: int) -> bool:
-        return cls.set_slider_value(ui=ui, name=name, value=value)
-
-    @classmethod
-    def get_slider_value(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_slider_value\\widget not found\\{name=}")
-            return None
-
-        t = _t.value()
-        log.debug(f"{cls.__name__}\\get_slider_value\\value={t}")
-        return t
-
-    @classmethod
-    def set_slider_value(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_slider_value\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_slider_value\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setValue(value)
-        log.debug(f"{cls.__name__}\\set_slider_value\\value={value}")
-        return True
-
-    @classmethod
-    def get_maximum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum\\widget not found\\{name=}")
-            return None
-
-        t = _t.maximum()
-        log.debug(f"{cls.__name__}\\get_maximum\\value={t}")
-        return t
-
-    @classmethod
-    def set_maximum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_maximum\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setMaximum(value)
-        log.debug(f"{cls.__name__}\\set_maximum\\value={value}")
-        return True
-
-    @classmethod
-    def get_minimum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_minimum\\widget not found\\{name=}")
-            return None
-
-        t = _t.minimum()
-        log.debug(f"{cls.__name__}\\get_minimum\\value={t}")
-        return t
-
-    @classmethod
-    def set_minimum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_minimum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_minimum\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setMinimum(value)
-        log.debug(f"{cls.__name__}\\set_minimum\\value={value}")
-        return True
-
-    @classmethod
-    def get_orientation(cls, ui: QWidget, name: str) -> Qt.Orientation | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_orientation\\widget not found\\{name=}")
-            return None
-
-        t = _t.orientation()
-        log.debug(f"{cls.__name__}\\get_orientation\\value={t}")
-        return t
-
-    @classmethod
-    def set_orientation(cls, ui: QWidget, name: str, orientation: Qt.Orientation) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_orientation\\widget not found\\{name=}")
-            return False
-        if not isinstance(orientation, Qt.Orientation):
-            log.warning(f"{cls.__name__}\\set_orientation\\value type not Qt.Orientation\\{type(orientation).__name__=}")
-            return False
-
-        _t.setOrientation(orientation)
-        log.debug(f"{cls.__name__}\\set_orientation\\value={orientation}")
-        return True
-
-    @classmethod
-    def get_single_step(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_single_step\\widget not found\\{name=}")
-            return None
-
-        t = _t.singleStep()
-        log.debug(f"{cls.__name__}\\get_single_step\\value={t}")
-        return t
-
-    @classmethod
-    def set_single_step(cls, ui: QWidget, name: str, step: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_single_step\\widget not found\\{name=}")
-            return False
-        if not isinstance(step, int):
-            log.warning(f"{cls.__name__}\\set_single_step\\value type not int\\{type(step).__name__=}")
-            return False
-
-        _t.setSingleStep(step)
-        log.debug(f"{cls.__name__}\\set_single_step\\value={step}")
-        return True
-
-    @classmethod
-    def get_page_step(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_page_step\\widget not found\\{name=}")
-            return None
-
-        t = _t.pageStep()
-        log.debug(f"{cls.__name__}\\get_page_step\\value={t}")
-        return t
-
-    @classmethod
-    def set_page_step(cls, ui: QWidget, name: str, step: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_page_step\\widget not found\\{name=}")
-            return False
-        if not isinstance(step, int):
-            log.warning(f"{cls.__name__}\\set_page_step\\value type not int\\{type(step).__name__=}")
-            return False
-
-        _t.setPageStep(step)
-        log.debug(f"{cls.__name__}\\set_page_step\\value={step}")
-        return True
-
-    @classmethod
-    def get_tick_interval(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_tick_interval\\widget not found\\{name=}")
-            return None
-
-        t = _t.tickInterval()
-        log.debug(f"{cls.__name__}\\get_tick_interval\\value={t}")
-        return t
-
-    @classmethod
-    def set_tick_interval(cls, ui: QWidget, name: str, interval: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_tick_interval\\widget not found\\{name=}")
-            return False
-        if not isinstance(interval, int):
-            log.warning(f"{cls.__name__}\\set_tick_interval\\value type not int\\{type(interval).__name__=}")
-            return False
-
-        _t.setTickInterval(interval)
-        log.debug(f"{cls.__name__}\\set_tick_interval\\value={interval}")
-        return True
-
-    @classmethod
-    def get_tick_position(cls, ui: QWidget, name: str) -> QSlider.TickPosition | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_tick_position\\widget not found\\{name=}")
-            return None
-
-        t = _t.tickPosition()
-        log.debug(f"{cls.__name__}\\get_tick_position\\value={t}")
-        return t
-
-    @classmethod
-    def set_tick_position(cls, ui: QWidget, name: str, position: QSlider.TickPosition) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QSlider, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_tick_position\\widget not found\\{name=}")
-            return False
-        if not isinstance(position, QSlider.TickPosition):
-            log.warning(f"{cls.__name__}\\set_tick_position\\value type not QSlider.TickPosition\\{type(position).__name__=}")
-            return False
-
-        _t.setTickPosition(position)
-        log.debug(f"{cls.__name__}\\set_tick_position\\value={position}")
-        return True
-
-
-class UICHQScrollBar(UICHValue):
-    @classmethod
-    def get_value(cls, ui: QWidget, name: str) -> int | None:
-        return cls.get_scrollbar_value(ui=ui, name=name)
-
-    @classmethod
-    def set_value(cls, ui: QWidget, name: str, value: int) -> bool:
-        return cls.set_scrollbar_value(ui=ui, name=name, value=value)
-
-    @classmethod
-    def get_scrollbar_value(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_scrollbar_value\\widget not found\\{name=}")
-            return None
-
-        t = _t.value()
-        log.debug(f"{cls.__name__}\\get_scrollbar_value\\value={t}")
-        return t
-
-    @classmethod
-    def set_scrollbar_value(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_scrollbar_value\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_scrollbar_value\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setValue(value)
-        log.debug(f"{cls.__name__}\\set_scrollbar_value\\value={value}")
-        return True
-
-    @classmethod
-    def get_maximum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_maximum\\widget not found\\{name=}")
-            return None
-
-        t = _t.maximum()
-        log.debug(f"{cls.__name__}\\get_maximum\\value={t}")
-        return t
-
-    @classmethod
-    def set_maximum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_maximum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_maximum\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setMaximum(value)
-        log.debug(f"{cls.__name__}\\set_maximum\\value={value}")
-        return True
-
-    @classmethod
-    def get_minimum(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_minimum\\widget not found\\{name=}")
-            return None
-
-        t = _t.minimum()
-        log.debug(f"{cls.__name__}\\get_minimum\\value={t}")
-        return t
-
-    @classmethod
-    def set_minimum(cls, ui: QWidget, name: str, value: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_minimum\\widget not found\\{name=}")
-            return False
-        if not isinstance(value, int):
-            log.warning(f"{cls.__name__}\\set_minimum\\value type not int\\{type(value).__name__=}")
-            return False
-
-        _t.setMinimum(value)
-        log.debug(f"{cls.__name__}\\set_minimum\\value={value}")
-        return True
-
-    @classmethod
-    def get_single_step(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_single_step\\widget not found\\{name=}")
-            return None
-
-        t = _t.singleStep()
-        log.debug(f"{cls.__name__}\\get_single_step\\value={t}")
-        return t
-
-    @classmethod
-    def set_single_step(cls, ui: QWidget, name: str, step: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_single_step\\widget not found\\{name=}")
-            return False
-        if not isinstance(step, int):
-            log.warning(f"{cls.__name__}\\set_single_step\\value type not int\\{type(step).__name__=}")
-            return False
-
-        _t.setSingleStep(step)
-        log.debug(f"{cls.__name__}\\set_single_step\\value={step}")
-        return True
-
-    @classmethod
-    def get_page_step(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_page_step\\widget not found\\{name=}")
-            return None
-
-        t = _t.pageStep()
-        log.debug(f"{cls.__name__}\\get_page_step\\value={t}")
-        return t
-
-    @classmethod
-    def set_page_step(cls, ui: QWidget, name: str, step: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_page_step\\widget not found\\{name=}")
-            return False
-        if not isinstance(step, int):
-            log.warning(f"{cls.__name__}\\set_page_step\\value type not int\\{type(step).__name__=}")
-            return False
-
-        _t.setPageStep(step)
-        log.debug(f"{cls.__name__}\\set_page_step\\value={step}")
-        return True
-
-    @classmethod
-    def get_orientation(cls, ui: QWidget, name: str) -> Qt.Orientation | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_orientation\\widget not found\\{name=}")
-            return None
-
-        t = _t.orientation()
-        log.debug(f"{cls.__name__}\\get_orientation\\value={t}")
-        return t
-
-    @classmethod
-    def set_orientation(cls, ui: QWidget, name: str, orientation: Qt.Orientation) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_orientation\\widget not found\\{name=}")
-            return False
-        if not isinstance(orientation, Qt.Orientation):
-            log.warning(f"{cls.__name__}\\set_orientation\\value type not Qt.Orientation\\{type(orientation).__name__=}")
-            return False
-
-        _t.setOrientation(orientation)
-        log.debug(f"{cls.__name__}\\set_orientation\\value={orientation}")
-        return True
-
-    @classmethod
-    def get_slider_position(cls, ui: QWidget, name: str) -> int | None:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\get_slider_position\\widget not found\\{name=}")
-            return None
-
-        t = _t.sliderPosition()
-        log.debug(f"{cls.__name__}\\get_slider_position\\value={t}")
-        return t
-
-    @classmethod
-    def set_slider_position(cls, ui: QWidget, name: str, position: int) -> bool:
-        _t = cls.get_widget_instance(ui=ui, _type=QScrollBar, name=name)
-        if _t is None:
-            log.warning(f"{cls.__name__}\\set_slider_position\\widget not found\\{name=}")
-            return False
-        if not isinstance(position, int):
-            log.warning(f"{cls.__name__}\\set_slider_position\\value type not int\\{type(position).__name__=}")
-            return False
-
-        _t.setSliderPosition(position)
-        log.debug(f"{cls.__name__}\\set_slider_position\\value={position}")
-        return True
+            *,
+            value: bool,
+            widget = None,
+            ui: QWidget = None,
+            name: str = None,
+    ) -> MEH[None]:
+        if not isinstance(value, bool):
+            log.warning(f"{cls.__name__}\\set_clear_button_enabled\\value type not bool\\{type(value).__name__=}")
+            return MEH.unit_err("value type not bool")
+
+        return cls.safe_widget_call(
+            widget=widget,
+            ui=ui,
+            name=name,
+            _type=QKeySequenceEdit,
+            func=lambda x:x.setClearButtonEnabled(value)
+        )
