@@ -3,7 +3,7 @@
 #  702361946@qq.com
 #  https://github.com/702361946
 
-from .config import ReturnValue, BaseClass, log
+from .config import BaseClass, log
 from ._path import PathTools
 from ._file import File, FileBaseClass
 from ._interpreter import Interpreter
@@ -13,7 +13,6 @@ from .f_json import Json
 
 __all__ = [
     'BaseClass',
-    'ReturnValue',
     "PathTools",
     'File',
     'FileBaseClass',

@@ -8,9 +8,9 @@ from __future__ import annotations
 import time
 from typing import Any
 from logging import Logger
-from typing import Generic, TypeVar
 
 from ._get_package import Log, log_path
+from modules._error_handling import ReturnValue
 
 log: Log = Log(
     log_sign="file_load",
@@ -25,42 +25,6 @@ def check_log(_log: Log | Logger) -> ReturnValue[Exception | None]:
         return ReturnValue(False, TypeError("log type not Log or Logger"))
 
     return ReturnValue(True, None)
-
-T = TypeVar("T")
-
-
-class ReturnValue(Generic[T]):
-    """
-    专为返回bool, v值的func设的检查类
-    """
-    __slots__ = ("ok", "v")
-    def __init__(self, ok: bool = False, v: Any | ReturnValue[Any] = None):
-        if isinstance(v, ReturnValue):
-            self.ok = v.ok
-            self.v = v.v
-        else:
-            self.ok = ok
-            self.v = v
-
-    def __call__(self, default: Any = None) -> Any:
-        """
-        rv()->rv.get()
-        """
-        return self.get(default=default)
-
-    def get(self, default: Any = None) -> Any:
-        if self.ok:
-            return self.v
-        return default
-
-    def unwrap(self) -> Any:
-        """
-        强制解包
-        """
-        return self.v if self.ok else None
-
-    def __bool__(self) -> bool:
-        return self.ok
 
 
 class BaseClass:
