@@ -5,64 +5,36 @@
 """
 用于QT ui文件加载转化等
 """
-from pathlib import Path
+import os
 
-from config import log, Log, work_directory
+from config import log
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QWidget
 
-from modules._file_operations import PathTools
+from modules._error_handling import MEH
 
 
 class UiFile:
-    def __init__(
-            self,
-            file_save_path: str = "ui",
-            _log: Log = log
-    ):
-        """
-
-        :param file_save_path: ui文件存储位置
-        """
-        fsp = PathTools.join_paths(work_directory, file_save_path)
-        if fsp:
-            self.file_save_path = fsp.v
-        else:
-            self.file_save_path = PathTools.str_to_path(".").v
-
-        self._log = _log
-
+    @classmethod
     def load(
-            self,
-            file_name: str,
-            file_paths: list[str | Path] | str | Path | None = None
-    ) -> QWidget | None:
+            cls,
+            file_path: str,
+            add_file_ext: bool = True,
+    ) -> MEH[QWidget]:
         """
 
-        :param file_name: 文件名,无需带.ui后缀,可补全
-        :param file_paths: {self.file_save_path}与ui文件所间隔的文件夹
+        :param file_path: 必须是绝对路径,除非能保证相对路径是正确的
+        :param add_file_ext:
         :return:
         """
-        if file_paths is None:
-            file_paths = []
-        elif not isinstance(file_paths, list):
-            file_paths = [file_paths]
+        if not file_path.lower().endswith(".ui") and add_file_ext:
+            file_path += ".ui"
 
-        if not file_name.lower().endswith(".ui"):
-            file_name += ".ui"
+        if not os.path.isfile(file_path):
+            return MEH.unit_err("file not exist")
 
-        file_path = PathTools.join_paths(
-            self.file_save_path,
-            *file_paths,
-            file_name
-        )
-        if not file_path:
-            return None
-
-        # load部分
-        log.info(f"load {file_path}")
-        ui_file = QFile(file_path.v)
+        ui_file = QFile(file_path)
         try:
             ui = None
             if ui_file.open(QIODevice.OpenModeFlag.ReadOnly):
@@ -73,4 +45,4 @@ class UiFile:
         finally:
             ui_file.close()
 
-        return ui
+        return MEH.unit_ok(ui) if ui is not None else MEH.unit_err(f"load ui file Error")
