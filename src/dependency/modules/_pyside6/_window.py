@@ -1,5 +1,7 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 
 from ._app import *
 from types import FunctionType
@@ -21,7 +23,7 @@ class Window:
             opacity: float = 1.0,
             window_close_callback_function: FunctionType | None = None,
             *,
-            log: Log = log
+            _log: Log = log
     ):
         """
         请先创立一个app实例,否则窗口将无法显示也无法创立
@@ -31,9 +33,9 @@ class Window:
         :param icon: 窗口图标,要求为QIcon对象或路径
         :param opacity: 窗口透明度,0~1的小数
         :param window_close_callback_function: 窗口关闭回调函数
-        :param log: 日志
+        :param _log: 日志
         """
-        self.log = log
+        self.log = _log
         self.log.info(
             "init window\n"
             f"{title=}\n"

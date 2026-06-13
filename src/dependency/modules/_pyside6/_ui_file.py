@@ -7,7 +7,7 @@
 """
 import os
 
-from config import log
+from .config import log
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QWidget
@@ -16,16 +16,26 @@ from modules._error_handling import MEH
 
 
 class UiFile:
+    _uiloader: QUiLoader = None
+    @classmethod
+    def _get_uiloader(cls) -> QUiLoader:
+        if not cls._uiloader:
+            cls._uiloader = QUiLoader()
+
+        return cls._uiloader
+
     @classmethod
     def load(
             cls,
             file_path: str,
             add_file_ext: bool = True,
+            parent: QWidget | None = None
     ) -> MEH[QWidget]:
         """
 
         :param file_path: 必须是绝对路径,除非能保证相对路径是正确的
         :param add_file_ext:
+        :param parent:
         :return:
         """
         if not file_path.lower().endswith(".ui") and add_file_ext:
@@ -38,11 +48,14 @@ class UiFile:
         try:
             ui = None
             if ui_file.open(QIODevice.OpenModeFlag.ReadOnly):
-                ui = QUiLoader().load(ui_file)
+                ui = cls._get_uiloader().load(ui_file, parentWidget=parent)
         except Exception as e:
             log.error(e)
             ui = None
         finally:
             ui_file.close()
 
-        return MEH.unit_ok(ui) if ui is not None else MEH.unit_err(f"load ui file Error")
+        if ui is None:
+            return MEH.unit_err(f"load ui file Error")
+
+        return MEH.unit_ok(ui)
