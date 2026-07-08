@@ -7,16 +7,14 @@ from ._os_name_get import os_name, work_directory
 from ._json import Json
 from ._log import Log, log_path
 from ._log_protocol import LogProtocol
-from ._log_template import LogTemplate
 
-__varsion__ = "0.1.0"
+__varsion__ = "0.1.1"
 __author__ = "702361946@qq.com"
 __license__ = "MIT"
 __all__ = [
     "os_name",
     "Log",
     "LogProtocol",
-    "LogTemplate",
     "Json",
     "log_path",
     "work_directory",
