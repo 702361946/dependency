@@ -1,13 +1,16 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 
 log_path: str
-log_levels: dict[str, int]
-log_output_replace_identifications: set[str]
-lori = log_output_replace_identifications
-
 
 class Log:
+    log_levels: dict[str, int]
+    log_output_replace_identifications: set[str]
+    lori = log_output_replace_identifications
+    log_level_color: dict[str, str | int]
+
     def __init__(
             self,
             log_sign: str = "default",
@@ -23,7 +26,7 @@ class Log:
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
             get_code_file_and_line: bool = False,
             get_code_len: int = 0,
-            color: dict[str, tuple[int, int, int] | bool] | None = None
+            start_color: bool = False,
     ):
         """
         替换标识支持:time,sign,level,message,
@@ -39,7 +42,9 @@ class Log:
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
         :param get_code_file_and_line: 获取调用log的地址
         :param get_code_len: 获取长度(不含Log类),为0时为全部
+        :param start_color: 启用颜色
         """
+        self.start_color: bool = start_color
         self.sign = str(log_sign)
         self.level = int(log_level)
         self.otc = bool(log_output_to_console)
@@ -50,8 +55,6 @@ class Log:
         self.otf = str(log_output_time_format)
         self.gcfal = bool(get_code_file_and_line)
         self.gcl = get_code_len
-        self.color = color or {"open": False}
-        self.colorama = None
         ...
 
     def level_if(self, level: str) -> bool:
@@ -61,8 +64,6 @@ class Log:
         :return: T/F
         """
         ...
-
-    def message_color(self, message: str, color: str) -> str: ...
 
     def output_color(self, level: str, message="") -> bool: ...
 
@@ -88,3 +89,9 @@ class Log:
     def save(self, message = "", level: str = "DEBUG") -> bool: ...
 
     def dict_config(self) -> dict[str, int | bool | str | tuple[list[str], str]]: ...
+
+    def output_console(
+            self,
+            message: str = "",
+            level: str = "Info",
+    ): ...

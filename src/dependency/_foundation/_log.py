@@ -1,5 +1,7 @@
-#  Copyright (c) 2025.
-#  702361946@qq.com(https://github.com/702361946)
+#  Copyright (c) 2025-2026.
+#  @702361946
+#  702361946@qq.com
+#  https://github.com/702361946
 
 import inspect
 import os
@@ -15,24 +17,30 @@ match os_name[0]:
     case _:
         log_path = "./log/"
 
-log_levels = {
-    "DEBUG": 0,
-    "INFO": 1,
-    "WARNING": 2,
-    "ERROR": 3,
-    "CRITICAL": 4
-}
-log_output_replace_identifications = {
-    "time",
-    "sign",
-    "level",
-    "message",
-    "code"
-}
-lori = log_output_replace_identifications
-
-
 class Log:
+    log_levels = {
+        "DEBUG": 0,
+        "INFO": 1,
+        "WARNING": 2,
+        "ERROR": 3,
+        "CRITICAL": 4
+    }
+    log_output_replace_identifications = {
+        "time",
+        "sign",
+        "level",
+        "message",
+        "code"
+    }
+    lori = log_output_replace_identifications
+    log_level_color = {
+        "DEBUG": 34,
+        "INFO": 37,
+        "WARNING": 33,
+        "ERROR": 31,
+        "CRITICAL": 91
+    }
+
     def __init__(
             self,
             log_sign: str = "default",
@@ -48,7 +56,7 @@ class Log:
             log_output_time_format: str = "%Y-%m-%d %H:%M:%S",
             get_code_file_and_line: bool = False,
             get_code_len: int = 0,
-            color: dict[str, str | bool | dict[str, str]] | None = None,
+            start_color: bool = False,
     ):
         """
         替换标识支持:time,sign,level,message,code
@@ -64,10 +72,7 @@ class Log:
         :param log_output_time_format: 输出时间的格式(格式与datetime一致)
         :param get_code_file_and_line: 获取调用log的地址
         :param get_code_len: 获取长度(不含Log类),为0时为全部
-        :param color: 必须有key ``open``, 为True or False, \
-         True时, 每个key都对应一个颜色, key为替换标识, \
-         当key对应为dict类型时,会使用.get方法获取颜色(实际上并没有), \
-         颜色对应colorama所包含的所有颜色
+        :param start_color: 启用颜色
         """
         self.sign = str(log_sign)
         self.level = int(log_level)
@@ -79,28 +84,12 @@ class Log:
         self.otf = str(log_output_time_format)
         self.gcfal = bool(get_code_file_and_line)
         self.gcl = get_code_len
-
-        if color is None:
-            color = {
-                "open": False,
-                "colorama": None
-            }
-        self.color = color
-        self.colorama = None
-
-        if self.color.get("open", False):
-            try:
-                import colorama
-                colorama.init(autoreset=True)
-                self.colorama = colorama
-            except ImportError:
-                colorama = None
-                self.color = {"open": False}
+        self.start_color = bool(start_color)
 
         # 格式化of
         t = []
         for i in self.of[0]:
-            if i in lori:
+            if i in self.__class__.lori:
                 t.append(i)
             else:
                 print(f"未知替换符:{i}")
@@ -126,126 +115,21 @@ class Log:
         :param level: 请求等级
         :return: T/F
         """
-        return log_levels.get(level, 5) >= self.level
+        return self.__class__.log_levels.get(level, 5) >= self.level
 
-    def message_color(self, message: str, color: str) -> str:
-        """
-        将文本加入颜色
-        """
-        if self.colorama is None:
-            return message
-        elif not self.color.get("open", False):
-            return message
-
-        colors = {
-            "BLACK": self.colorama.Fore.BLACK,
-            "LIGHTBLACK_EX": self.colorama.Fore.LIGHTBLACK_EX,
-            "RED": self.colorama.Fore.RED,
-            "LIGHTRED_EX": self.colorama.Fore.LIGHTRED_EX,
-            "GREEN": self.colorama.Fore.GREEN,
-            "LIGHTGREEN_EX": self.colorama.Fore.LIGHTGREEN_EX,
-            "YELLOW": self.colorama.Fore.YELLOW,
-            "LIGHTYELLOW_EX": self.colorama.Fore.LIGHTYELLOW_EX,
-            "BLUE": self.colorama.Fore.BLUE,
-            "LIGHTBLUE_EX": self.colorama.Fore.LIGHTBLUE_EX,
-            "MAGENTA": self.colorama.Fore.MAGENTA,
-            "LIGHTMAGENTA_EX": self.colorama.Fore.LIGHTMAGENTA_EX,
-            "CYAN": self.colorama.Fore.CYAN,
-            "LIGHTCYAN_EX": self.colorama.Fore.LIGHTCYAN_EX,
-            "WHITE": self.colorama.Fore.WHITE,
-            "LIGHTWHITE_EX": self.colorama.Fore.LIGHTWHITE_EX,
-        }
-
-        color = colors.get(color.upper(), False)
-        if not color:
-            return message
-
-        message = f"{color}{message}{self.colorama.Style.RESET_ALL}"
-
-        return message
-
-    def output_color(self, level: str, message: str = "") -> bool:
-        """
-        输出
-        :param level:
-        :param message:
-        :return:
-        """
-        if not self.level_if(level):
-            return False
-
-        # 格式化输出
-        t = ''
-        for i in self.of[0]:
-            match i:
-                case "time":
-                    t += f"""{
-                        self.message_color(
-                            f"{datetime.now().strftime(self.otf)}",
-                            self.color.get("time", "")
-                        )
-                    }{self.of[1]}"""
-                case "sign":
-                    t += f"""{
-                        self.message_color(
-                            f'{self.sign}',
-                            self.color.get('sign', '')
-                        )
-                    }{self.of[1]}"""
-                case "code":
-                    if self.gcfal:
-                        a = inspect.stack()
-                        file_in = os.path.abspath(__file__)
-                        v = 0
-                        _t = ""
-                        for frame in a:
-                            if v >= self.gcl != 0:
-                                break
-                            f_name = str(frame.filename)
-                            if f_name == file_in:
-                                continue
-                            f_name = f_name.replace(work_directory, ".")
-
-                            f_line = frame.lineno
-
-                            _t += f"{f_name}:{f_line},"
-                            v += 1
-                        _t = _t[:-1]  # 去掉最后的","
-                        t += f"""{
-                            self.message_color(
-                                _t,
-                                self.color.get('code', '')
-                            )
-                        }{self.of[1]}"""
-
-                case "level":
-                    t += f"""{
-                        self.message_color(
-                            level,
-                            self.color.get(
-                                'level', {}
-                            ).get(level, "")
-                        )
-                    }{self.of[1]}"""
-                case "message":
-                    t += f"""{
-                        self.message_color(
-                            message,
-                            self.color.get(
-                                "message", ""
-                            )
-                        )
-                    }{self.of[1]}"""
-
-        t = t[:-1]
-
+    def output_console(
+            self,
+            message: str = "",
+            level: str = "Info",
+    ):
         if self.otc:
-            print(t)
+            if self.start_color:
+                message = (f"\033["
+                           f"{self.__class__.log_level_color.get(level, 37)}m"
+                           f"{message}"
+                           f"\033[0m")
 
-        with open(self.otfp, "a", encoding=self.otfe) as f:
-            f.write(t + "\n")
-
-        return True
+            print(message)
 
     def output(self, level: str, message: str = "") -> bool:
         """
@@ -293,8 +177,7 @@ class Log:
 
         t = t[:-1]
 
-        if self.otc:
-            print(t)
+        self.output_console(message=t, level=level)
 
         with open(self.otfp, "a", encoding=self.otfe) as f:
             f.write(t + "\n")
@@ -349,7 +232,7 @@ class Log:
         :return:
         """
         if level is None:
-            for i in log_levels.items():
+            for i in self.__class__.log_levels.items():
                 if i[1] == self.level:
                     return self.output(i[0], message)
         return self.output(level, message)
